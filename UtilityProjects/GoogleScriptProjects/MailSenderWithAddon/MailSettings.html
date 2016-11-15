@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<!-- Written by Elangovan Manickam. For any queries/modifications, please contact: elangovan4ever@gmail.com -->
+<html>
+  <head>
+    
+     <base target="_top">
+
+    <script>
+    
+    // Prevent forms from submitting.
+    function preventFormSubmit() 
+    {
+       var forms = document.querySelectorAll('form');
+       for (var i = 0; i < forms.length; i++) 
+       {
+           forms[i].addEventListener('submit', function(event) {
+                                 event.preventDefault();
+                                  });
+       }
+    }
+    window.addEventListener('load', preventFormSubmit);
+    
+    function initMailSettingsForm()
+    {
+        google.script.run.withSuccessHandler(updateFormElements)
+                         .getMailSettings();
+         document.getElementById("progressResult").innerHTML = "";
+         document.getElementById("recipientsTO").style.backgroundColor='white';
+         document.getElementById("recipientsCC").style.backgroundColor='white';
+         
+         hideMailFreqSections();
+         
+         initTimeSelectOptions();
+    }
+    
+    function initTimeSelectOptions()
+    {
+         var daysSelector = document.getElementById("daysSelector");
+         clearSelectBox(daysSelector);
+         for(var i = 28; i >= 1; --i)
+         {
+             var option = document.createElement('option');
+             option.text = option.value = i;
+             daysSelector.add(option, 0);
+         }
+         
+         var hoursSelectorDaily = document.getElementById("hoursSelectorDaily");
+         var minutesSelectorDaily = document.getElementById("minutesSelectorDaily");
+         populateTimeSelectors(hoursSelectorDaily,minutesSelectorDaily);
+         
+         var hoursSelectorWeekly = document.getElementById("hoursSelectorWeekly");
+         var minutesSelectorWeekly = document.getElementById("minutesSelectorWeekly");
+         populateTimeSelectors(hoursSelectorWeekly,minutesSelectorWeekly);
+         
+         var hoursSelectorMonthly = document.getElementById("hoursSelectorMonthly");
+         var minutesSelectorMonthly = document.getElementById("minutesSelectorMonthly");
+         populateTimeSelectors(hoursSelectorMonthly,minutesSelectorMonthly);
+    }
+    
+    function populateTimeSelectors(hoursSelector,minutesSelector)
+    {
+         clearSelectBox(hoursSelector);
+         for(var i = 23; i >= 0; --i)
+         {
+             var option = document.createElement('option');
+             option.text = option.value = i;
+             hoursSelector.add(option, 0);
+         }
+         
+         clearSelectBox(minutesSelector);
+         for(var i = 59; i >= 0; --i)
+         {
+             var option = document.createElement('option');
+             option.text = option.value = i;
+             minutesSelector.add(option, 0);
+         } 
+    }
+    
+    function clearSelectBox(selectbox)
+    {
+         for(var i=selectbox.options.length-1;i>=0;i--)
+         {
+             selectbox.remove(i);
+         }
+    }
+    
+    function updateFormElements(mailProperties)
+    {
+        var recipientsTO = mailProperties["recipientsTO"];
+        var recipientsCC = mailProperties["recipientsCC"];
+        var mailSubject = mailProperties["mailSubject"];
+        var mailMessage = mailProperties["mailMessage"];
+        var mailTiggerFreq = mailProperties["mailTiggerFreq"];
+        
+        document.getElementById("recipientsTO").value=recipientsTO;
+        document.getElementById("recipientsCC").value=recipientsCC;
+        document.getElementById("mailSubject").value=mailSubject;
+        document.getElementById("mailMessage").value=mailMessage;
+        document.getElementById("mailTriggerFreq").value=mailTiggerFreq;
+    }
+    
+    function validateEmails(listOfMails)
+    {     
+	    listOfMails= listOfMails.replace(/\s+/g, '');
+	    var emails = listOfMails.split(",");
+	    var regex = /^(\s?[^\s,]+@[^\s,]+\.[^\s,]+\s?,)*(\s?[^\s,]+@[^\s,]+\.[^\s,]+)$/;
+
+	    for (var i = 0; i < emails.length; i++) 
+	    {
+		    var email = emails[i].trim();
+		
+		    if(email=="")
+			    continue;
+			 
+		    if(!regex.test(email))
+			    return false;
+	     }
+	     return true;
+    }
+    
+    function handleFormSubmit(formObject)
+    {
+        if(!validateEmails(formObject.recipientsTO.value))
+        {
+            document.getElementById("progressResult").innerHTML = "Please enter valid email ids";
+            formObject.recipientsTO.style.backgroundColor='yellow';
+            return;
+        }
+        
+        if(!validateEmails(formObject.recipientsCC.value))
+        {
+            document.getElementById("progressResult").innerHTML = "Please enter valid email ids";
+            formObject.recipientsCC.style.backgroundColor='yellow';
+            return;
+        }
+        
+        document.getElementById("progressResult").innerHTML = "Working on your changes, Plesae wait...";
+        google.script.run.withSuccessHandler(updateSuccessResults)
+                         .withFailureHandler(updateFailureResults)
+                         .saveMailSettings(formObject);
+    }
+    
+    function updateSuccessResults()
+    {
+        google.script.run.showMessagePopup("Success","your mail preferences are saved successfully");
+        document.getElementById("progressResult").innerHTML = "";
+    }
+    
+    function updateFailureResults()
+    {
+        google.script.run.showMessagePopup("Error","Something went wrong while saving mail preferences, please contact on elangovan4ever@gmail.com");
+        document.getElementById("progressResult").innerHTML = "";
+    }
+    
+    function onSelectMailFreq()
+    {
+        hideMailFreqSections();
+        
+        var selectedFreq = document.getElementById("mailTriggerFreq").value;
+
+        switch(selectedFreq)
+        {
+             case "daily":
+                 document.getElementById("dailySection").style.display = "block";
+                 break;
+             case "weekly":
+                 document.getElementById("weeklySection").style.display = "block";
+                 break;
+             case "monthly":
+                 document.getElementById("monthlySection").style.display = "block";
+                 break;
+        }
+    }
+    
+    function hideMailFreqSections()
+    {
+        document.getElementById("dailySection").style.display = "none";
+        document.getElementById("weeklySection").style.display = "none";
+        document.getElementById("monthlySection").style.display = "none";
+    }
+    
+  </script>
+  </head>
+  <body onload="initMailSettingsForm()" style="background-color:LightGray;">
+    
+	<form id="mailSettingsForm" onsubmit="handleFormSubmit(this)">
+		TO Recipients:<br>
+        <textarea name="recipientsTO" rows="5" cols="35" id="recipientsTO"></textarea>
+        <div id="toHint">Specify list of email ids seperated by comma (,)</div><hr>
+        CC Recipients:<br>
+        <textarea name="recipientsCC" rows="3" cols="35" id="recipientsCC"></textarea>
+        <div id="ccHint">Specify list of email ids seperated by comma (,)</div><hr>
+		Subject:<br>
+        <textarea name="mailSubject" rows="3" cols="35" id="mailSubject"></textarea><hr>
+		Message:<br>
+        <textarea name="mailMessage" rows="3" cols="35" id="mailMessage"></textarea><hr>
+        <div style="display:none;">
+        Auto Mail Frequency : <select id="mailTriggerFreq" style="width:200px" onchange="onSelectMailFreq()">
+            <option value="none">No Auto Mail</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+        </select><br>
+        <div id="dailySection" style="display:none;">
+        Time : <select id="hoursSelectorDaily" style="width:50px"></select> : <select id="minutesSelectorDaily" style="width:50px"></select>
+        </div>
+        <div id="weeklySection" style="display:none;">
+        Weekday : <select id="weekdays" style="width:100px">
+            <option value="monday">Monday</option>
+            <option value="tuesday">Tuesday</option>
+            <option value="wednesday">Wednesday</option>
+            <option value="thursday">Thursday</option>
+            <option value="friday">Friday</option>
+            <option value="saturday">Saturday</option>
+            <option value="sunday">Sunday</option>
+        </select><br>
+        Time : <select id="hoursSelectorWeekly" style="width:50px"></select> : <select id="minutesSelectorWeekly" style="width:50px"></select>
+        </div>
+        <div id="monthlySection" style="display:none;">
+        day of the month : <select id="daysSelector" style="width:50px"></select><br>
+        Time : <select id="hoursSelectorMonthly" style="width:50px"></select> : <select id="minutesSelectorMonthly" style="width:50px"></select>
+        </div></div>
+        <hr><br>
+		<input type="submit" name="saveSettings" value="SaveSettings"/>&nbsp;&nbsp;
+        <input type="button" value="Reset" onclick="initMailSettingsForm()">
+	</form>
+    <br>
+    <div id="progressResult"/>    
+  </body>
+</html>
+
+

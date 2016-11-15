@@ -1,0 +1,1347 @@
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=98 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.BluetoothService"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=99 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',path='/org/freedesktop/DBus',arg0='com.harman.service.BluetoothService'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=116 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.AhaConnect"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=117 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.AhaConnect"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=118 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',path='/org/freedesktop/DBus',arg0='com.harman.service.AhaConnect'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=158 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.AudioEntModeManager"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=159 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',path='/org/freedesktop/DBus',arg0='com.harman.service.AudioEntModeManager'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=161 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.Media"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=162 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.Media"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=163 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',path='/org/freedesktop/DBus',arg0='com.harman.service.Media'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=20 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',path='/org/freedesktop/DBus',arg0='com.harman.service.BluetoothService'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=21 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.BluetoothService"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=3 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='bluetoothStatus'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=4 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='deviceUnpaired'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=5 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='deviceSearchList'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=6 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='profileSearchList'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=7 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceSearchList'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=8 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceConnected'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=9 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceConnectError'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=10 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceDisconnected'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=11 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='networkOperatorChanged'"
+
+method call sender=:com.harman.service.ConnectivityManager -> dest=org.freedesktop.DBus serial=12 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='deviceState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=374 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='DeviceCapability'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=375 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='VideoStatus'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=376 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='VideoStream'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=377 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='devicePlayable'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=378 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='deviceState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=379 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='mediaType'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=380 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='nowPlaying'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=381 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='play'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=382 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='playMode'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=383 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='playState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=384 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='playTime'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=385 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='readyToBrowse'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=386 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='readyToPlay'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=387 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='syncState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=388 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='trackState'"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=4 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "deviceState"
+  string "{"authStatus":"notAuthed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.2","handle":0,"id":30,"identifier":"1Z69MS6P","mountPoint":"/fs/usb0","msid":30,"name":"V_SU_APPS","storage":"flash","type":"usb","uuid":"","zoneId":0}}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=5 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "syncState"
+  string "{"id":30,"state":"start"}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=6 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "deviceState"
+  string "{"authStatus":"AuthSucceed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.4","handle":0,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"Kona's iPhone (2) -","storage":"flash","type":"ipod","uuid":"","zoneId":0}}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=49 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',path='/org/freedesktop/DBus',arg0='com.harman.service.Media'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=50 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.Media"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=51 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='playState'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=52 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='activeDevice'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=57 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',path='/org/freedesktop/DBus',arg0='com.harman.service.BluetoothService'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=58 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.BluetoothService"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=486 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/AudioEntModeManager',arg0='audioSource'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=73 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='deviceState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=487 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/AudioEntModeManager',arg0='availableAudioSources'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=488 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/AudioEntModeManager',arg0='userMuteState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=490 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.AudioEntModeManager"
+
+method call sender=:com.harman.service.AhaConnect -> dest=org.freedesktop.DBus serial=1 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=Hello
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AudioEntModeManager serial=491 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "getAudioSource"
+  string "{}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AudioEntModeManager serial=492 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "getAvailableAudioSources"
+  string "{"props":"availableAudioSources"}"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=505 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.AudioEntModeManager"
+
+method call sender=:com.harman.service.AhaConnect -> dest=org.freedesktop.DBus serial=4 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=NameHasOwner
+  string "com.harman.service.AudioEntModeManager"
+
+method call sender=:com.harman.service.AhaConnect -> dest=com.harman.service.AudioEntModeManager serial=5 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "registerEntertainmentModes"
+  string "{"category":"apps","list":["Aha"]}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AudioEntModeManager serial=506 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "getAudioSource"
+  string "{}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AudioEntModeManager serial=507 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "getAvailableAudioSources"
+  string "{"props":"availableAudioSources"}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=88 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":false},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=508 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/AhaConnect',arg0='ClientStatusUpdate'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=509 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/AhaConnect',arg0='NewContentPlaybackState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=510 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/AhaConnect',arg0='PlaybackOfNewStation'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=511 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/AhaConnect',arg0='PlaybackProgress'"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=89 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=491
+  string "{"source":"usb1","uniqueName":"ipod23","usb1":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=492
+  string "{"am":{"available":true},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=493
+  string "{"AVCLevel":1,"balanceLevel":0,"bassLevel":0,"fadeLevel":0,"gainOffset":{"SHF_mic":0,"aux":0},"midLevel":0,"shfMicMute":true,"toneAlertAudibility":{"alerts":"on","tones":"on"},"trebleLevel":0,"volumeLevel":{"FRONT_L_SPKR":{"BEEP":15,"MEDIA":15,"NAV":15,"PHONE":15,"PROMPTS":15,"RING":15,"TRAFFIC":15},"FRONT_R_SPKR":{"BEEP":15,"MEDIA":15,"NAV":15,"PHONE":15,"PROMPTS":15,"RING":15,"TRAFFIC":15},"REAR_L_SPKR":{"BEEP":15,"MEDIA":15,"NAV":15,"PHONE":15,"PROMPTS":15,"RING":15,"TRAFFIC":15},"REAR_R_SPKR":{"BEEP":15,"MEDIA":15,"NAV":15,"PHONE":15,"PROMPTS":15,"RING":15,"TRAFFIC":15}}}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=com.harman.service.Media serial=95 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "getDevices"
+  string "{}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=96 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"name":"Aha"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.AhaConnect reply_serial=5
+  string "{"Aha":{"source":"audioApp1"}}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=506
+  string "{"source":"usb1","uniqueName":"ipod23","usb1":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=507
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"name":"Aha"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method call sender=:com.harman.service.AhaConnect -> dest=org.freedesktop.DBus serial=6 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/ConnectivityManager',arg0='appConnected'"
+
+method call sender=:com.harman.service.AhaConnect -> dest=org.freedesktop.DBus serial=7 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/ConnectivityManager',arg0='appDisconnected'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=101 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceConnected'"
+
+method call sender=:com.harman.service.AhaConnect -> dest=com.harman.service.ConnectivityManager serial=8 path=/com/harman/service/ConnectivityManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "connectApp"
+  string "{"app":"AHA"}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=102 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceDisconnected'"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AudioEntModeManager reply_serial=95
+  string "{"devices":[{"authStatus":"notAuthed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.2","handle":0,"id":30,"identifier":"1Z69MS6P","mountPoint":"/fs/usb0","msid":30,"name":"V_SU_APPS","storage":"flash","type":"usb","uuid":"","zoneId":0}},{"authStatus":"AuthSucceed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.4","handle":0,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"Kona's iPhone (2) -","storage":"flash","type":"ipod","uuid":"","zoneId":0}}]}"
+
+method return sender=:com.harman.service.ConnectivityManager -> dest=:com.harman.service.AhaConnect reply_serial=8
+  string "{"address":"ba114282aa66d9f13c851b6014aa49cbb40618ea","appName":"AHA","errorCode":"0","mountPoint":"/dev/AHA","msid":23,"result":"success","type":"USB","uuid":"AHA"}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=103 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='callState'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=com.harman.service.BluetoothService serial=104 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Invoke
+  string "getProperties"
+  string "{"properties":["pairedDeviceList"]}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=com.harman.service.Media serial=106 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "getDevices"
+  string "{}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=107 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"name":"Aha"},"audioApp2":{"appId":"Pandora","available":true,"name":"Pandora"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method call sender=:com.harman.service.AhaConnect -> dest=com.harman.service.Media serial=9 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "allocateDevice"
+  string "{"devType":"shadow","msid":23,"name":"audioApp1","uuid":"Aha"}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AudioEntModeManager reply_serial=106
+  string "{"devices":[{"authStatus":"notAuthed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.2","handle":0,"id":30,"identifier":"1Z69MS6P","mountPoint":"/fs/usb0","msid":30,"name":"V_SU_APPS","storage":"flash","type":"usb","uuid":"","zoneId":0}},{"authStatus":"AuthSucceed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.4","handle":0,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"Kona's iPhone (2) -","storage":"flash","type":"ipod","uuid":"","zoneId":0}}]}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=9 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "syncState"
+  string "{"id":23,"state":"start"}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=10 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "deviceState"
+  string "{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":1,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp1","storage":"flash","type":"shadow","uuid":"Aha","zoneId":0}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=115 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"id":23,"name":"Aha"},"audioApp2":{"appId":"Pandora","available":true,"name":"Pandora"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AhaConnect reply_serial=9
+  string "{"code":0,"description":"success","handle":1}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.BluetoothService serial=512 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Invoke
+  string "getProperties"
+  string "{"props":["ready"]}"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=513 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='ready'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=514 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='batteryCharge'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=515 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='bluetoothStatus'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=516 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='callState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=517 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='deviceDisconnected'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=518 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='deviceUnpaired'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=519 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='handsFreeMode'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=520 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='networkOperator'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=521 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='networkOperatorChanged'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=522 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='networkRegistrationState'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=523 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='pairingStatus'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=524 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='phoneVrMode'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=525 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='securePairingRequest'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=526 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceConnectError'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=527 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceConnected'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=528 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='serviceDisconnected'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=529 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='signalQuality'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=530 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='siriStatus'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=531 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='standardPairingRequest'"
+
+method call sender=:com.harman.service.HMI -> dest=org.freedesktop.DBus serial=532 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/BluetoothService',arg0='supportedFeaturesList'"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.BluetoothService serial=533 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Invoke
+  string "getProperties"
+  string "{"props":["localDeviceName"]}"
+
+method return sender=:com.harman.service.BluetoothService -> dest=:com.harman.service.AudioEntModeManager reply_serial=104
+  string "{"pairedDeviceList":{}}"
+
+method return sender=:com.harman.service.BluetoothService -> dest=:com.harman.service.HMI reply_serial=512
+  string "{}"
+
+method return sender=:com.harman.service.BluetoothService -> dest=:com.harman.service.HMI reply_serial=533
+  string "{"localDeviceName":{"localDeviceName":"Subaru BT"}}"
+
+signal sender=:com.harman.service.ConnectivityManager -> dest=(null destination) serial=23 path=/com/harman/service/ConnectivityManager; interface=com.harman.ServiceIpc; member=Emit
+  string "appConnected"
+  string "{"UUID":"CLARION","address":"ba114282aa66d9f13c851b6014aa49cbb40618ea","appName":"CLARION","gwIp":"192.168.1.1","hostIp":"192.168.0.1","interface":"/dev/tun4","msid":23,"type":"USB"}"
+
+signal sender=:com.harman.service.ConnectivityManager -> dest=(null destination) serial=25 path=/com/harman/service/ConnectivityManager; interface=com.harman.ServiceIpc; member=Emit
+  string "appConnected"
+  string "{"UUID":"PANDORA","address":"ba114282aa66d9f13c851b6014aa49cbb40618ea","appName":"PANDORA","mountPoint":"/dev/PANDORA","msid":23,"type":"USB"}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=12 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "deviceState"
+  string "{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":2,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp2","storage":"flash","type":"shadow","uuid":"Pandora","zoneId":0}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=116 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"id":23,"name":"Aha"},"audioApp2":{"appId":"Pandora","available":true,"id":23,"name":"Pandora"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=38 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "profileSearchList"
+  string "{"profiles":[{"profile":"AVRCP","majorVersion":1,"minorVersion":4},{"profile":"A2DP","majorVersion":1,"minorVersion":2},{"profile":"HSP","majorVersion":1,"minorVersion":2},{"profile":"HFP","majorVersion":1,"minorVersion":6},{"profile":"SAP","majorVersion":1,"minorVersion":2},{"profile":"PAN","majorVersion":1,"minorVersion":0},{"profile":"PBAP","majorVersion":1,"minorVersion":1},{"profile":"MAP","majorVersion":1,"minorVersion":1},{"profile":"OPP","majorVersion":1,"minorVersion":0},{"profile":"SPP","majorVersion":0,"minorVersion":0}],"address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=39 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "bluetoothStatus"
+  string "{"status":true}"
+
+method call sender=:com.harman.service.BluetoothService -> dest=com.harman.service.Media serial=40 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "getProperties"
+  string "{"props":["deviceState"]}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.BluetoothService serial=559 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Invoke
+  string "getPairedDeviceList"
+  string "{}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.BluetoothService reply_serial=40
+  string "{"deviceState":{"authStatus":"","available":false,"device":{"content":"","devicePath":"","handle":0,"id":0,"identifier":"","mountPoint":"","msid":0,"name":"","storage":"flash","type":"unknown","uuid":"","zoneId":0}}}"
+
+method call sender=:com.harman.service.BluetoothService -> dest=org.freedesktop.DBus serial=41 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='deviceState'"
+
+method return sender=:com.harman.service.BluetoothService -> dest=:com.harman.service.HMI reply_serial=559
+  string "{"pairedDeviceList":[{"vendorIDSource":"0001","inrange":false,"cod":5898764,"date":"2015-01-01 00:00:23","complete":false,"name":"Stella","address":"10:92:66:CB:05:8F","productID":"0100","serviceSearchList":[{"priority":1,"service":"A2DP_SOURCE","connected":false,"connecting":false},{"priority":1,"service":"HFPGW","connected":false,"connecting":true},{"priority":0,"service":"PAN_NAP","connected":false,"connecting":false},{"priority":0,"service":"GATT","connected":false,"connecting":false},{"priority":0,"service":"GAP","connected":false,"connecting":false},{"priority":0,"service":"AVRCP","connected":false,"connecting":false},{"priority":0,"service":"HSPGW","connected":false,"connecting":false},{"priority":0,"service":"00001203-0000-1000-8000-00805F9B34FB","connected":false,"connecting":false},{"priority":0,"service":"SAP","connected":false,"connecting":false},{"priority":0,"service":"00001204-0000-1000-8000-00805F9B34FB","connected":false,"connecting":false},{"priority":0,"service":"PAN_PANU","connected":false,"connecting":false},{"priority":1,"service":"PBAP_SERVER","connected":false,"connecting":false},{"priority":0,"service":"MAP_ACCESS_SERVER","connected":false,"connecting":false},{"priority":0,"service":"OPP_SERVER","connected":false,"connecting":false},{"priority":0,"service":"PANDORA","connected":false,"connecting":false},{"priority":0,"service":"C63AD5C0-77D9-11E3-84CF-0002A5D5C51B","connected":false,"connecting":false},{"priority":0,"service":"AHA","connected":false,"connecting":false},{"priority":0,"service":"CLARION","connected":false,"connecting":false}],"vendorID":"0075","version":"0200"}],"description":"success","code":0}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=15 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "readyToPlay"
+  string "{"msid":30,"status":true}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=com.harman.service.Media serial=127 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "getDevices"
+  string "{}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=128 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"id":23,"name":"Aha"},"audioApp2":{"appId":"Pandora","available":true,"id":23,"name":"Pandora"},"audioApp3":{"appId":"Clarion","available":true,"name":"Clarion"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":false,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AudioEntModeManager reply_serial=127
+  string "{"devices":[{"authStatus":"notAuthed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.2","handle":0,"id":30,"identifier":"1Z69MS6P","mountPoint":"/fs/usb0","msid":30,"name":"V_SU_APPS","storage":"flash","type":"usb","uuid":"","zoneId":0}},{"authStatus":"AuthSucceed","available":true,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.4","handle":0,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"Kona's iPhone (2) -","storage":"flash","type":"ipod","uuid":"","zoneId":0}},{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":1,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp1","storage":"flash","type":"shadow","uuid":"Aha","zoneId":0}},{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":2,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp2","storage":"flash","type":"shadow","uuid":"Pandora","zoneId":0}}]}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=45 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=17 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "readyToPlay"
+  string "{"msid":23,"status":true}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=18 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "readyToBrowse"
+  string "{"msid":30,"status":true}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=19 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "syncState"
+  string "{"id":30,"state":"completed"}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=22 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "readyToBrowse"
+  string "{"msid":23,"status":true}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=23 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "syncState"
+  string "{"id":23,"state":"completed"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=47 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=48 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=com.harman.service.Media serial=130 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "getDevices"
+  string "{}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AudioEntModeManager reply_serial=130
+  string "{"devices":[{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.2","handle":0,"id":30,"identifier":"1Z69MS6P","mountPoint":"/fs/usb0","msid":30,"name":"V_SU_APPS","storage":"flash","type":"usb","uuid":"","zoneId":0}},{"authStatus":"AuthSucceed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":0,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"Kona's iPhone (2) -","storage":"flash","type":"ipod","uuid":"","zoneId":0}},{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":1,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp1","storage":"flash","type":"shadow","uuid":"Aha","zoneId":0}},{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":2,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp2","storage":"flash","type":"shadow","uuid":"Pandora","zoneId":0}}]}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=org.freedesktop.DBus serial=131 path=/org/freedesktop/DBus; interface=org.freedesktop.DBus; member=AddMatch
+  string "type='signal',interface='com.harman.ServiceIpc',member='Emit',path='/com/harman/service/Media',arg0='readyToPlay'"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=com.harman.service.Media serial=132 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "getProperties"
+  string "{"msid":30,"props":["readyToPlay"]}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=133 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"id":23,"name":"Aha"},"audioApp2":{"appId":"Pandora","available":true,"id":23,"name":"Pandora"},"audioApp3":{"appId":"Clarion","available":true,"name":"Clarion"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":true,"id":30,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AudioEntModeManager reply_serial=132
+  string "{"readyToPlay":{"msid":30,"status":true}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=142 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "audioSource"
+  string "{"fallbackAfterIgnition":true,"fm":{"available":true},"source":"fm","sourceType":"fm","uniqueName":"fm0"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=49 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=50 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=51 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=52 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=53 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=54 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=55 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=56 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=57 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=58 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=59 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=60 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=61 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=62 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=63 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=64 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=65 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=66 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=67 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=573
+  string "{"success":"OK"}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=576
+  string "{"success":"OK"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=577 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "connectAha"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=577
+  string "{"code":0,"description":"success"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AudioEntModeManager serial=582 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "setAudioSource"
+  string "{"service":"hmi","source":"audioApp1"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=583 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "startPeerSession"
+  string "{"notificationInterval":1,"sessionFlags":0}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=582
+  string "{}"
+
+method call sender=:com.harman.service.AudioEntModeManager -> dest=com.harman.service.Media serial=158 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "selectDevice"
+  string "{"browseType":"metadata","handle":1,"id":23}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=27 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "mediaType"
+  string "{"mediaType":1,"msid":0,"zoneId":1}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AudioEntModeManager reply_serial=158
+  string "{"code":0,"description":"success"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=583
+  string "{"session":{"accessToLocServices":true,"appVersion":"5.4","deviceModel":"iPhone","deviceSWVersion":"8.4"}}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=584 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "changeClientPlaybackStateToPlay"
+  string "{}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=585 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentStationContentSelectionState"
+  string "{}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=12 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "ClientStatusUpdate"
+  string "{"statusCode":0}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=586 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentStationContentSelectionState"
+  string "{}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=13 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "ClientStatusUpdate"
+  string "{"statusCode":1}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=14 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "NewContentPlaybackState"
+  string "{"contentID":1449829960,"playbackState":2}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=584
+  string "{"code":0,"description":"success"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=585
+  string "{"StationContentSelectionState":{"contentId":1449829960,"playbackState":2,"stationId":1449829954,"timeMarker":152}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=160 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "audioSource"
+  string "{"audioApp1":{"appId":"Aha","available":true,"id":23,"name":"Aha"},"service":"hmi","source":"audioApp1","sourceType":"audioApp1","uniqueName":"audioAppAha"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=590 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentParameters"
+  string "{"contentID":1449829960}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=591 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentImage"
+  string "{"contentID":1449829960,"height":190,"width":190}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=586
+  string "{"StationContentSelectionState":{"contentId":1449829960,"playbackState":2,"stationId":1449829954,"timeMarker":152}}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=592 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getStationParameters"
+  string "{"paramFlag":131080,"stationID":1449829954}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=593 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentParameters"
+  string "{"contentID":1449829960}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=594 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getStationParameters"
+  string "{"paramFlag":131080,"stationID":1449829954}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=595 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentParameters"
+  string "{"contentID":1449829960}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=18 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":152,"totalContentLength":1535}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=590
+  string "{"addToPreset":0,"canBack":true,"canDislike":true,"canLike":true,"canNext":true,"canPause":true,"canTimeShift":true,"canUnvote":true,"contentID":1449829960,"contentImage":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png","disliked":false,"hideProgressBar":false,"latitude":0.0,"liked":true,"locationString":"","longitude":0.0,"numOfReviews":0,"phone":"","rating":-1.0,"title":"478 – Suscetibilidade à negatividade"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=591
+  string "{"imagePath":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=596 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentContentInfo"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=592
+  string "{"fullName":"PodCasting Brasil","isLBSStation":false,"stationID":1449829954}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=593
+  string "{"addToPreset":0,"canBack":true,"canDislike":true,"canLike":true,"canNext":true,"canPause":true,"canTimeShift":true,"canUnvote":true,"contentID":1449829960,"contentImage":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png","disliked":false,"hideProgressBar":false,"latitude":0.0,"liked":true,"locationString":"","longitude":0.0,"numOfReviews":0,"phone":"","rating":-1.0,"title":"478 – Suscetibilidade à negatividade"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=23 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":153,"totalContentLength":1535}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=594
+  string "{"fullName":"PodCasting Brasil","isLBSStation":false,"stationID":1449829954}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=25 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "ClientStatusUpdate"
+  string "{"statusCode":0}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=595
+  string "{"addToPreset":0,"canBack":true,"canDislike":true,"canLike":true,"canNext":true,"canPause":true,"canTimeShift":true,"canUnvote":true,"contentID":1449829960,"contentImage":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png","disliked":false,"hideProgressBar":false,"latitude":0.0,"liked":true,"locationString":"","longitude":0.0,"numOfReviews":0,"phone":"","rating":-1.0,"title":"478 – Suscetibilidade à negatividade"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=596
+  string "null"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=597 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentContentInfo"
+  string "{}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=598 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentStationContentSelectionState"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=597
+  string "null"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=598
+  string "{"StationContentSelectionState":{"contentId":1449829960,"playbackState":2,"stationId":1449829954,"timeMarker":154}}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=599 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentContentInfo"
+  string "{}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=600 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getStationParameters"
+  string "{"paramFlag":131080,"stationID":1449829954}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=601 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentParameters"
+  string "{"contentID":1449829960}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=599
+  string "null"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=33 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":154,"totalContentLength":1535}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=600
+  string "{"fullName":"PodCasting Brasil","isLBSStation":false,"stationID":1449829954}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=601
+  string "{"addToPreset":0,"canBack":true,"canDislike":true,"canLike":true,"canNext":true,"canPause":true,"canTimeShift":true,"canUnvote":true,"contentID":1449829960,"contentImage":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png","disliked":false,"hideProgressBar":false,"latitude":0.0,"liked":true,"locationString":"","longitude":0.0,"numOfReviews":0,"phone":"","rating":-1.0,"title":"478 – Suscetibilidade à negatividade"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=602 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentContentInfo"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=602
+  string "null"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=37 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":155,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=38 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":157,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=39 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":157,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=68 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=41 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":158,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=42 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":159,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=43 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":160,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=44 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":161,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=45 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":162,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=46 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":163,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=47 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":164,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=48 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":165,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=49 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":166,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=50 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":167,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=69 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=51 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":168,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=52 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":169,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=53 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":170,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=54 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":171,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=55 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":172,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=56 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":173,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=58 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":174,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=59 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449829960,"currentElapsedTime":175,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.ConnectivityManager -> dest=(null destination) serial=26 path=/com/harman/service/ConnectivityManager; interface=com.harman.ServiceIpc; member=Emit
+  string "appDisconnected"
+  string "{"UUID":"AHA","address":"ba114282aa66d9f13c851b6014aa49cbb40618ea","appName":"AHA","mountPoint":"/dev/AHA","msid":23,"type":"USB"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=60 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "ClientStatusUpdate"
+  string "{"statusCode":3}"
+
+method call sender=:com.harman.service.AhaConnect -> dest=com.harman.service.Media serial=61 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "freeDevice"
+  string "{"handle":1}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=29 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "deviceState"
+  string "{"authStatus":"notAuthed","available":false,"device":{"content":"","devicePath":"/pps/qnx/device/usb-1.0.4","handle":1,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp1","storage":"flash","type":"shadow","uuid":"Aha","zoneId":0}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=162 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"name":"Aha"},"audioApp2":{"appId":"Pandora","available":true,"id":23,"name":"Pandora"},"audioApp3":{"appId":"Clarion","available":true,"name":"Clarion"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":true,"id":30,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=163 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "audioSource"
+  string "{"audioApp1":{"appId":"Aha","available":true,"name":"Aha"},"source":"audioApp1","sourceType":"audioApp1","uniqueName":"audioAppAha"}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AhaConnect reply_serial=61
+  string "{"code":0,"description":"success"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=605 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "changeClientPlaybackStateToPause"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=605
+  string "{"code":46,"description":"read or write fails on mountpoint, phone connection problem"}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=70 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=606
+  string "{"success":"OK"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=608 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "connectAha"
+  string "{}"
+
+method call sender=:com.harman.service.AhaConnect -> dest=com.harman.service.ConnectivityManager serial=63 path=/com/harman/service/ConnectivityManager; interface=com.harman.ServiceIpc; member=Invoke
+  string "connectApp"
+  string "{"app":"AHA"}"
+
+method return sender=:com.harman.service.ConnectivityManager -> dest=:com.harman.service.AhaConnect reply_serial=63
+  string "{"address":"ba114282aa66d9f13c851b6014aa49cbb40618ea","appName":"AHA","errorCode":"0","mountPoint":"/dev/AHA","msid":23,"result":"success","type":"USB","uuid":"AHA"}"
+
+signal sender=:com.harman.service.ConnectivityManager -> dest=(null destination) serial=28 path=/com/harman/service/ConnectivityManager; interface=com.harman.ServiceIpc; member=Emit
+  string "appConnected"
+  string "{"UUID":"AHA","address":"ba114282aa66d9f13c851b6014aa49cbb40618ea","appName":"AHA","mountPoint":"/dev/AHA","msid":23,"type":"USB"}"
+
+method call sender=:com.harman.service.AhaConnect -> dest=com.harman.service.Media serial=64 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Invoke
+  string "allocateDevice"
+  string "{"devType":"shadow","msid":23,"name":"audioApp1","uuid":"Aha"}"
+
+signal sender=:com.harman.service.Media -> dest=(null destination) serial=31 path=/com/harman/service/Media; interface=com.harman.ServiceIpc; member=Emit
+  string "deviceState"
+  string "{"authStatus":"notAuthed","available":true,"device":{"content":"music","devicePath":"/pps/qnx/device/usb-1.0.4","handle":3,"id":23,"identifier":"ba114282aa66d9f13c851b6014aa49cbb40618ea","mountPoint":"iap://usb:///1/000/004","msid":23,"name":"audioApp1","storage":"flash","type":"shadow","uuid":"Aha","zoneId":0}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=169 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "availableAudioSources"
+  string "{"am":{"available":true},"audioApp1":{"appId":"Aha","available":true,"id":23,"name":"Aha"},"audioApp2":{"appId":"Pandora","available":true,"id":23,"name":"Pandora"},"audioApp3":{"appId":"Clarion","available":true,"name":"Clarion"},"aux":{"available":false},"btsa":{"available":false},"cd":{"available":false},"fm":{"available":true},"sat":{"available":true},"usb1":{"available":true,"id":30,"type":"usb"},"usb2":{"available":false,"type":"usb"}}"
+
+signal sender=:com.harman.service.AudioEntModeManager -> dest=(null destination) serial=170 path=/com/harman/service/AudioEntModeManager; interface=com.harman.ServiceIpc; member=Emit
+  string "audioSource"
+  string "{"audioApp1":{"appId":"Aha","available":true,"id":23,"name":"Aha"},"source":"audioApp1","sourceType":"audioApp1","uniqueName":"audioAppAha"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=65 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "ClientStatusUpdate"
+  string "{"statusCode":0}"
+
+method return sender=:com.harman.service.Media -> dest=:com.harman.service.AhaConnect reply_serial=64
+  string "{"code":0,"description":"success","handle":3}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=608
+  string "{"code":0,"description":"success"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=612 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentStationContentSelectionState"
+  string "{}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=613 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "startPeerSession"
+  string "{"notificationInterval":1,"sessionFlags":0}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=612
+  string "{"StationContentSelectionState":{"contentId":0,"playbackState":0,"stationId":0,"timeMarker":0}}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=613
+  string "{"session":{"accessToLocServices":true,"appVersion":"5.4","deviceModel":"iPhone","deviceSWVersion":"8.4"}}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=614 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getStations"
+  string "{"stationType":1}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=617 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "changeClientPlaybackStateToPlay"
+  string "{}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=618 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentStationContentSelectionState"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=614
+  string "{"stations":[{"fullName":"this WEEK in TECH - MP3 Edition","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830447},{"fullName":"1990s & Today's Lite Hits","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830471},{"fullName":"PodCasting Brasil","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830425},{"fullName":"Tech Fetish","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830436},{"fullName":"IGN: UK","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830308},{"fullName":"105 DJ Night","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830306},{"fullName":"HitKast Hip Hop","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830360},{"fullName":"Duel of the Fates by Jack Mangan","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830282},{"fullName":"Hey man, I've heard you sold your dreams by Benjamin G. Dubel","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830496},{"fullName":"1360 News Talk WTAQ","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830364},{"fullName":"1485","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830423},{"fullName":"Doubt The Doubts | John Lee Dumas | Mike Holt | Rock Star Entrepreneurs Interviewed Everyday","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830329},{"fullName":"Twitter","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830482},{"fullName":"NDTV 24x7","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830370},{"fullName":"Dose of Leadership  |  John Lee Dumas | Dana Perino | Steve Forbes | David Allen | Marshall Goldsmith | Jim Kouzes | Podcasting | What is Leadership","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830398},{"fullName":"Radio City Hindi","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830355},{"fullName":"Technology","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830343},{"fullName":"Story","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830459},{"fullName":"Akdeniz FM","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830280},{"fullName":"TED Talks","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830410},{"fullName":"Ladies' Party","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830369},{"fullName":"Love Bollywood","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830483},{"fullName":"Billboard #1 single songs 1960-1969 R&B/ soul","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830481},{"fullName":"KSCH Schenectady Air Traffic Control","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830373},{"fullName":"Orlando KMCO Air Traffic Control Scanner","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830477},{"fullName":"My Podcasts","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830474},{"fullName":"Cricinfo: Bowl at Boycs","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830386},{"fullName":"Lexington KLEX Air Traffic Control Scanner","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830303},{"fullName":"KROQ","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830357},{"fullName":"Arvorig FM","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830421},{"fullName":"WELCOME TO THE BEEHIVE: A beginners guide to conquering the world of business by Robert J. Safuto","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830292},{"fullName":"!f music","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830291},{"fullName":"\"He Still Likes Her\"","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830475},{"fullName":"2FAN","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830494},{"fullName":"Business & Finance","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830359},{"fullName":"A.R.Rahman Radio","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830479},{"fullName":"Football Weekly","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830375},{"fullName":"Alice's Adventures in Wonderland","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830344},{"fullName":"Audiobooks","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830368}]}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=617
+  string "{"code":0,"description":"success"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=618
+  string "{"StationContentSelectionState":{"contentId":0,"playbackState":0,"stationId":0,"timeMarker":0}}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=619 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getStations"
+  string "{"stationType":1}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=619
+  string "{"stations":[{"fullName":"this WEEK in TECH - MP3 Edition","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830447},{"fullName":"1990s & Today's Lite Hits","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830471},{"fullName":"PodCasting Brasil","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830425},{"fullName":"Tech Fetish","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830436},{"fullName":"IGN: UK","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830308},{"fullName":"105 DJ Night","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830306},{"fullName":"HitKast Hip Hop","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830360},{"fullName":"Duel of the Fates by Jack Mangan","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830282},{"fullName":"Hey man, I've heard you sold your dreams by Benjamin G. Dubel","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830496},{"fullName":"1360 News Talk WTAQ","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830364},{"fullName":"1485","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830423},{"fullName":"Doubt The Doubts | John Lee Dumas | Mike Holt | Rock Star Entrepreneurs Interviewed Everyday","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830329},{"fullName":"Twitter","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830482},{"fullName":"NDTV 24x7","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830370},{"fullName":"Dose of Leadership  |  John Lee Dumas | Dana Perino | Steve Forbes | David Allen | Marshall Goldsmith | Jim Kouzes | Podcasting | What is Leadership","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830398},{"fullName":"Radio City Hindi","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830355},{"fullName":"Technology","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830343},{"fullName":"Story","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830459},{"fullName":"Akdeniz FM","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830280},{"fullName":"TED Talks","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830410},{"fullName":"Ladies' Party","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830369},{"fullName":"Love Bollywood","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830483},{"fullName":"Billboard #1 single songs 1960-1969 R&B/ soul","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830481},{"fullName":"KSCH Schenectady Air Traffic Control","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830373},{"fullName":"Orlando KMCO Air Traffic Control Scanner","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830477},{"fullName":"My Podcasts","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830474},{"fullName":"Cricinfo: Bowl at Boycs","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830386},{"fullName":"Lexington KLEX Air Traffic Control Scanner","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830303},{"fullName":"KROQ","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830357},{"fullName":"Arvorig FM","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830421},{"fullName":"WELCOME TO THE BEEHIVE: A beginners guide to conquering the world of business by Robert J. Safuto","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830292},{"fullName":"!f music","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830291},{"fullName":"\"He Still Likes Her\"","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830475},{"fullName":"2FAN","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830494},{"fullName":"Business & Finance","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830359},{"fullName":"A.R.Rahman Radio","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830479},{"fullName":"Football Weekly","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830375},{"fullName":"Alice's Adventures in Wonderland","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830344},{"fullName":"Audiobooks","isFeaturedStation":false,"isLBSStation":false,"stationID":1449830368}]}"
+
+method return sender=:com.harman.service.AudioEntModeManager -> dest=:com.harman.service.HMI reply_serial=621
+  string "{"success":"OK"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=74 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "ClientStatusUpdate"
+  string "{"statusCode":0}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=623 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentStationContentSelectionState"
+  string "{}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=75 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "NewContentPlaybackState"
+  string "{"contentID":1449830428,"playbackState":0}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=624 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentParameters"
+  string "{"contentID":1449830428}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=625 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentImage"
+  string "{"contentID":1449830428,"height":190,"width":190}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=76 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "NewContentPlaybackState"
+  string "{"contentID":1449830428,"playbackState":3}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=77 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":0,"totalContentLength":0}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=626 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentImage"
+  string "{"contentID":1449830428,"height":190,"width":190}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=78 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "NewContentPlaybackState"
+  string "{"contentID":1449830428,"playbackState":2}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=627 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentImage"
+  string "{"contentID":1449830428,"height":190,"width":190}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=623
+  string "{"StationContentSelectionState":{"contentId":1449830428,"playbackState":2,"stationId":1449830425,"timeMarker":173}}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=628 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getStationParameters"
+  string "{"paramFlag":131080,"stationID":1449830425}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=629 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getContentParameters"
+  string "{"contentID":1449830428}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=624
+  string "{"addToPreset":0,"canBack":true,"canDislike":true,"canLike":true,"canNext":true,"canPause":true,"canTimeShift":true,"canUnvote":true,"contentID":1449830428,"contentImage":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png","disliked":false,"hideProgressBar":false,"latitude":0.0,"liked":true,"locationString":"","longitude":0.0,"numOfReviews":0,"phone":"","rating":-1.0,"title":"478 – Suscetibilidade à negatividade"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=625
+  string "{"imagePath":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png"}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=630 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentContentInfo"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=626
+  string "{"imagePath":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=627
+  string "{"imagePath":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=628
+  string "{"fullName":"PodCasting Brasil","isLBSStation":false,"stationID":1449830425}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=629
+  string "{"addToPreset":0,"canBack":true,"canDislike":true,"canLike":true,"canNext":true,"canPause":true,"canTimeShift":true,"canUnvote":true,"contentID":1449830428,"contentImage":"/tmp/ahaImages/http:wsl.ahanet.neticonimages875079_300_c5ae66fe49c46c43e12b7d9320684952_TS_1442640969779.png","disliked":false,"hideProgressBar":false,"latitude":0.0,"liked":true,"locationString":"","longitude":0.0,"numOfReviews":0,"phone":"","rating":-1.0,"title":"478 – Suscetibilidade à negatividade"}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=630
+  string "null"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=89 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":174,"totalContentLength":1535}"
+
+method call sender=:com.harman.service.HMI -> dest=com.harman.service.AhaConnect serial=631 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Invoke
+  string "getCurrentContentInfo"
+  string "{}"
+
+method return sender=:com.harman.service.AhaConnect -> dest=:com.harman.service.HMI reply_serial=631
+  string "null"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=71 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=92 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":175,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=94 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":176,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=95 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":177,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=96 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":178,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=97 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":179,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=98 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":180,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=99 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":181,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=100 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":182,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=101 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":183,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=102 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":184,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.BluetoothService -> dest=(null destination) serial=72 path=/com/harman/service/BluetoothService; interface=com.harman.ServiceIpc; member=Emit
+  string "serviceConnectError"
+  string "{"service":"HFPGW","name":"Stella","address":"10:92:66:CB:05:8F"}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=103 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":185,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=104 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":186,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=105 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":187,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=106 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":188,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=107 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":189,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=108 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":190,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=110 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":191,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=111 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":192,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=112 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":193,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=113 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":194,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=114 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":195,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=115 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":196,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=116 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":197,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=117 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":198,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=118 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":199,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=119 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":200,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=120 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":201,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=121 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":202,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=122 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":203,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=123 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":204,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=124 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":205,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=125 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":206,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=127 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":207,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=128 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":208,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=129 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":209,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=130 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":210,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=131 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":211,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=132 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":212,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=133 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":213,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=134 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":214,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=135 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":215,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=136 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":216,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=137 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":217,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=138 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":218,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=139 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":219,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=140 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":220,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=141 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":221,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=142 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":222,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=144 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":223,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=145 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":224,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=146 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":225,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=147 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":226,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=148 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":227,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=149 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":228,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=150 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":229,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=151 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":230,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=152 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":231,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=153 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":232,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=154 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":233,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=155 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":234,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=156 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":235,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=157 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":236,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=158 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":237,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=160 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":238,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=161 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":239,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=162 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":240,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=163 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":241,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=164 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":242,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=165 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":243,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=166 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":244,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=167 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":245,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=168 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":246,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=169 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":247,"totalContentLength":1535}"
+
+signal sender=:com.harman.service.AhaConnect -> dest=(null destination) serial=170 path=/com/harman/service/AhaConnect; interface=com.harman.ServiceIpc; member=Emit
+  string "PlaybackProgress"
+  string "{"contentID":1449830428,"currentElapsedTime":248,"totalContentLength":1535}"
