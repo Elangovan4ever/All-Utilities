@@ -81,6 +81,8 @@ Lets explore both the ways.
 	6)	Once imported into eclipse, open file named "MethodTraceFilter.java".
 		Change the trace file path to point to the directory where you copied from device or emulator using adb pull command earlier.
 			private static String remoteTraceFile = "/storage/emulated/0/Android/data/com.example.emanickam.sampleapp/files/sampleapp.trace";
+		change the PULL_TRACE_FILE flag to false if you already pulled the trace file from remote. In this case you must place the trace file inside the resources directory (under this project's root directory) manually
+			private static boolean PULL_TRACE_FILE = true; -> false
 	7) 	Run the program from eclipse.  menu: Run->Run
 		This application will pull the trace file from connected android emulator or phone, so make sure the device is still connected.
 		After that it will run dmtracedump command to generate readable text file.
@@ -93,53 +95,165 @@ Lets explore both the ways.
 		Sample output form this utility application run:
 		------------------------------------------------		
 						Starting program
-						[  1%] /storage/emulated/0/Android/data/com.example.emanickam.sampleapp/files/sampleapp.trace
-						[100%] /storage/emulated/0/Android/data/com.example.emanickam.sampleapp/files/sampleapp.trace
-						fileName: E:\Git_Repository\AndroidMethodTraceFilter\resources\methodtrace.txt
+						Executing command :dmtracedump -ho D:\Java_Workspace\AndroidMethodTraceFilter\resources\methodtrace.trace > D:\TempPractices\Java_Workspace\AndroidMethodTraceFilter\resources\methodtrace.txt
+						fileName: D:\Java_Workspace\AndroidMethodTraceFilter\resources\methodtrace.txt
+						
+						
 						========
 						Method Tracer
 						========
-						Please enter the function name: oncreateview
-						Please enter the class name (Optional, press Enter to ignore): myfragment1
-
-						android.app.BackStackRecord.run                                            level: 0, lineNo: 37454, thread: 2221                                                              
-						 android.app.FragmentManagerImpl.moveToState                               level: 1, lineNo: 37797, thread: 2221                                                              
-						  android.app.FragmentManagerImpl.moveToState                              level: 2, lineNo: 37802, thread: 2221                                                              
-							android.app.Fragment.performCreateView                                  level: 3, lineNo: 37901, thread: 2221                                                              
-							 com.example.emanickam.sampleapp.MyFragment1.onCreateView               level: 4, lineNo: 37904, thread: 2221                                                              
-
-						com.example.emanickam.sampleapp.MainActivity.onCreate                      level: 0, lineNo: 163674, thread: 2221                                                             
-						 android.app.Activity.setContentView                                       level: 1, lineNo: 164449, thread: 2221                                                             
-						  com.android.internal.policy.PhoneWindow.setContentView                   level: 2, lineNo: 164452, thread: 2221                                                             
-							android.view.LayoutInflater.inflate                                     level: 3, lineNo: 190041, thread: 2221                                                             
-							 android.view.LayoutInflater.inflate                                    level: 4, lineNo: 190042, thread: 2221                                                             
-							  android.view.LayoutInflater.inflate                                   level: 5, lineNo: 190143, thread: 2221                                                             
-							   android.view.LayoutInflater.rInflateChildren                         level: 6, lineNo: 190738, thread: 2221                                                             
-								android.view.LayoutInflater.rInflate                                level: 7, lineNo: 190741, thread: 2221                                                             
-								 android.view.LayoutInflater.createViewFromTag                      level: 8, lineNo: 190768, thread: 2221                                                             
-								  android.view.LayoutInflater.createViewFromTag                     level: 9, lineNo: 190769, thread: 2221                                                             
-								   android.app.Activity.onCreateView                                level: 10, lineNo: 190806, thread: 2221                                                            
-									android.app.FragmentController.onCreateView                     level: 11, lineNo: 190841, thread: 2221                                                            
-									 android.app.FragmentManagerImpl.onCreateView                   level: 12, lineNo: 190842, thread: 2221                                                            
-									  android.app.FragmentManagerImpl.addFragment                   level: 13, lineNo: 191297, thread: 2221                                                            
-									   android.app.FragmentManagerImpl.moveToState                  level: 14, lineNo: 191386, thread: 2221                                                            
-										android.app.FragmentManagerImpl.moveToState                 level: 15, lineNo: 191387, thread: 2221                                                            
-										 android.app.Fragment.performCreateView                     level: 16, lineNo: 191508, thread: 2221                                                            
-										  com.example.emanickam.sampleapp.MyFragment1.onCreateView  level: 17, lineNo: 191511, thread: 2221                                                            
-
-						android.app.Activity.performCreateCommon                                   level: 0, lineNo: 205026, thread: 2221                                                             
-						 android.app.FragmentController.dispatchActivityCreated                    level: 1, lineNo: 205031, thread: 2221                                                             
-						  android.app.FragmentManagerImpl.dispatchActivityCreated                  level: 2, lineNo: 205032, thread: 2221                                                             
-							android.app.FragmentManagerImpl.moveToState                             level: 3, lineNo: 205033, thread: 2221                                                             
-							 android.app.FragmentManagerImpl.moveToState                            level: 4, lineNo: 205034, thread: 2221                                                             
-							  android.app.FragmentManagerImpl.moveToState                           level: 5, lineNo: 205039, thread: 2221                                                             
-							   android.app.Fragment.performCreateView                               level: 6, lineNo: 205202, thread: 2221                                                             
-								com.example.emanickam.sampleapp.MyFragment1.onCreateView            level: 7, lineNo: 205205, thread: 2221                                                             
-
+						Please choose your choice:
+						
+						0. exit
+						1. Search by class name
+						2. Search by method name
+						Select any option[0-2]: 1
+						Please enter the class name: 
+						mainactivity
+						
+						
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.newActivity                         level: 7, lineNo: 1262, thread: 4017                                                               
+						         java.lang.Class.newInstance                                    level: 8, lineNo: 1271, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.<init>            level: 9, lineNo: 1370, thread: 4017                                                               
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						         android.app.Activity.performCreate                             level: 8, lineNo: 2499, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.onCreate          level: 9, lineNo: 2500, thread: 4017                                                               
+						                                                                        
+						                                                                        
+						========                                                                
+						Method Tracer                                                           
+						========                                                                
+						Please choose your choice:                                              
+						                                                                        
+						0. exit                                                                 
+						1. Search by class name                                                 
+						2. Search by method name                                                
+						Select any option[0-2]: 2                                               
+						Please enter the function name:                                         
+						oncreate                                                                
+						Please enter the class name (Optional, press Enter to ignore):          
+						                                                                        
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						         android.app.Activity.performCreate                             level: 8, lineNo: 2499, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.onCreate          level: 9, lineNo: 2500, thread: 4017                                                               
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						         android.app.Activity.performCreate                             level: 8, lineNo: 2499, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.onCreate          level: 9, lineNo: 2500, thread: 4017                                                               
+						           android.support.v7.app.AppCompatActivity.onCreate            level: 10, lineNo: 2501, thread: 4017                                                              
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						         android.app.Activity.performCreate                             level: 8, lineNo: 2499, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.onCreate          level: 9, lineNo: 2500, thread: 4017                                                               
+						           android.support.v7.app.AppCompatActivity.onCreate            level: 10, lineNo: 2501, thread: 4017                                                              
+						            android.support.v7.app.AppCompatDelegateImplV14.onCreate    level: 11, lineNo: 2820, thread: 4017                                                              
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						         android.app.Activity.performCreate                             level: 8, lineNo: 2499, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.onCreate          level: 9, lineNo: 2500, thread: 4017                                                               
+						           android.support.v7.app.AppCompatActivity.onCreate            level: 10, lineNo: 2501, thread: 4017                                                              
+						            android.support.v7.app.AppCompatDelegateImplV14.onCreate    level: 11, lineNo: 2820, thread: 4017                                                              
+						             android.support.v7.app.AppCompatDelegateImplV9.onCreate    level: 12, lineNo: 2821, thread: 4017                                                              
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						         android.app.Activity.performCreate                             level: 8, lineNo: 2499, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.onCreate          level: 9, lineNo: 2500, thread: 4017                                                               
+						           android.support.v7.app.AppCompatActivity.onCreate            level: 10, lineNo: 2501, thread: 4017                                                              
+						            android.support.v4.app.FragmentActivity.onCreate            level: 11, lineNo: 3132, thread: 4017                                                              
+						                                                                        
+						                                                                        
+						 Dummy function since this level not present in the original trace      level: 0, lineNo: 1148, thread: 4017                                                               
+						  Dummy function since this level not present in the original trace     level: 1, lineNo: 1148, thread: 4017                                                               
+						   android.os.Handler.dispatchMessage                                   level: 2, lineNo: 1148, thread: 4017                                                               
+						    android.app.ActivityThread$H.handleMessage                          level: 3, lineNo: 1149, thread: 4017                                                               
+						     android.app.ActivityThread.access$800                              level: 4, lineNo: 1231, thread: 4017                                                               
+						      android.app.ActivityThread.handleLaunchActivity                   level: 5, lineNo: 1232, thread: 4017                                                               
+						       android.app.ActivityThread.performLaunchActivity                 level: 6, lineNo: 1255, thread: 4017                                                               
+						        android.app.Instrumentation.callActivityOnCreate                level: 7, lineNo: 2496, thread: 4017                                                               
+						         android.app.Activity.performCreate                             level: 8, lineNo: 2499, thread: 4017                                                               
+						          com.example.inemanicka.testapp.MainActivity.onCreate          level: 9, lineNo: 2500, thread: 4017                                                               
+						           android.support.v7.app.AppCompatActivity.onCreate            level: 10, lineNo: 2501, thread: 4017                                                              
+						            android.support.v4.app.FragmentActivity.onCreate            level: 11, lineNo: 3132, thread: 4017                                                              
+						             android.support.v4.app.BaseFragmentActivityGingerbread.o   level: 12, lineNo: 3137, thread: 4017                                                              
+						              android.app.Activity.onCreate                             level: 13, lineNo: 3138, thread: 4017                                                              
+						                                                                        
+						
 						========
 						Method Tracer
 						========
-						Please enter the function name: 
+						Please choose your choice:
+						
+						0. exit
+						1. Search by class name
+						2. Search by method name
+						Select any option[0-2]: 0
 
    
 2) Traceview 

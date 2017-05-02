@@ -9,13 +9,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.Vector;
-import java.util.function.Function;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
@@ -25,11 +22,13 @@ import java.util.regex.Pattern;
 public class MethodTraceFilter {
 
 	private static String remoteTraceFile = "/storage/emulated/0/Android/data/com.example.emanickam.sampleapp/files/sampleapp.trace";
+	private static boolean PULL_TRACE_FILE = true;
 
 	private static Logger logger;
 	private static String LOGFILENAME = "";
 	private static final int FILE_SIZE = 1024 * 1024 * 10;
 	private static final int NUM_OF_LOG_FILES = 20;
+	private static boolean functionFound = false;
 	
 	public static void main(String args[]) {
 		
@@ -74,18 +73,24 @@ public class MethodTraceFilter {
 
 		// Starting the actual task
 		
-		String command = "adb pull " + remoteTraceFile + " " + projectDir + "\\resources\\methodtrace.trace";
-
-		boolean isSuccess = executeCommand(command);
+		String command = "";
+		boolean isSuccess = true;
 		
-		if(!isSuccess)
+		if(PULL_TRACE_FILE == true)
 		{
-			System.out.print("Command excution failed for:"+command+"\nTerminating the application.");
-			System.exit(0);
+			command = "adb pull " + remoteTraceFile + " " + projectDir + "\\resources\\methodtrace.trace";
+	
+			isSuccess  = executeCommand(command);
+			
+			if(!isSuccess)
+			{
+				System.out.print("Command excution failed for:"+command+"\nTerminating the application.");
+				System.exit(0);
+			}
 		}
-
+		
 		command = "dmtracedump -ho " + projectDir + "\\resources\\methodtrace.trace > " + projectDir + "\\resources\\methodtrace.txt";
-		executeCommand(command);
+		isSuccess = executeCommand(command);
 		
 		if(!isSuccess)
 		{
@@ -188,30 +193,70 @@ public class MethodTraceFilter {
 				threadData.setRootNodes(rootNodes);
 			}
 			
+			BufferedReader br;
+			String className = "";
+			String functionName = "";
+			
 			while (true) {
 				
-				System.out.println("\n========\nMethod Tracer\n========");
-				System.out.println("Please enter the function name: ");
-				BufferedReader br = new BufferedReader(new InputStreamReader(
-						System.in));
-				String functionName = br.readLine();
-				if(functionName.isEmpty())
-				{
-					continue;
+				
+				switch (getMenuOption()) {
+				case 0:
+					System.exit(0);
+
+				case 1:
+					System.out.println("Please enter the class name: ");
+					br = new BufferedReader(new InputStreamReader(
+							System.in));
+					className = br.readLine();
+					if(className.isEmpty())
+					{
+						System.out.println("Not a valid class name");
+						continue;
+					}
+					
+					functionName = "."+className +".";
+					functionFound = false;
+					
+					findFunctionInAllNodes(allNodesFromFile, functionName);
+					
+					if(functionFound == false)
+					{
+						System.out.println("class name : "+className+ " is not found");
+					}
+					
+					break;
+				case 2:
+					System.out.println("Please enter the function name: ");
+					br = new BufferedReader(new InputStreamReader(
+							System.in));
+					functionName = br.readLine();
+					if(functionName.isEmpty())
+					{
+						System.out.println("Not a valid function name");
+						continue;
+					}
+					
+					System.out.println("Please enter the class name (Optional, press Enter to ignore): ");
+					className = br.readLine();
+					
+					if(!className.isEmpty())
+						functionName = className +"."+ functionName;
+					
+					functionFound = false;
+					
+					findFunctionInAllNodes(allNodesFromFile, functionName);
+					
+					if(functionFound == false)
+					{
+						System.out.println("functionName: "+functionName+ " is not found");
+					}
+					break;
+				
+				default:
+					System.out.println("Invalid option, Try again");
+					break;
 				}
-				
-				System.out.println("Please enter the class name (Optional, press Enter to ignore): ");
-				String className = br.readLine();
-				
-				if(!className.isEmpty())
-					functionName = className +"."+ functionName;
-				
-				if(!findFunctionInAllNodes(allNodesFromFile, functionName) == true)
-				{
-					System.out.println("functionName: "+functionName+ " is not found");
-					//System.out.println("functionName: oncreateview is not found");
-				}
-				
 				
 			}
 		}
@@ -221,62 +266,60 @@ public class MethodTraceFilter {
 		}
 	}
 	
-	public static boolean findFunctionInAllNodes(Map<Integer, ThreadData> allNodesFromFile, String functionName) 
-	{
-		boolean functionFound = false;
-		for (Map.Entry<Integer, ThreadData> entry : allNodesFromFile.entrySet())
-		{
-			if(findInEachRootNodes(entry.getValue().getRootNodes(), functionName) == true)
-			{
-				functionFound = true;
-				//return true;
-			}
+	public static int getMenuOption() {
+		int option = 0;
+		try {
+			System.out.println();
+			System.out.println("\n========\nMethod Tracer\n========");
+			System.out.println("Please choose your choice:\n");
+			System.out.println("0. exit");
+			System.out.println("1. Search by class name");
+			System.out.println("2. Search by method name");
+			System.out.print("Select any option[0-2]: ");
+
+			BufferedReader br = new BufferedReader(new InputStreamReader(
+					System.in));
+			option = Integer.parseInt(br.readLine());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		
-		return functionFound;
+		return option;
 	}
 	
-	public static boolean findInEachRootNodes(List<FunctionData> rootNodes, String functionName) 
+	public static void findFunctionInAllNodes(Map<Integer, ThreadData> allNodesFromFile, String functionName) 
 	{
-		boolean functionFound = false;
+		for (Map.Entry<Integer, ThreadData> entry : allNodesFromFile.entrySet())
+		{
+			findInEachRootNodes(entry.getValue().getRootNodes(), functionName);
+		}
+	}
+	
+	public static void findInEachRootNodes(List<FunctionData> rootNodes, String functionName) 
+	{
 		for (FunctionData currentRootNode : rootNodes)
 		{
-			if(findFunctionData(currentRootNode, functionName) == true)
-			{
-				functionFound = true;
-				//return true;
-			}
+			findFunctionData(currentRootNode, functionName);
 		}
-		
-		return functionFound;
 	}
 
-	public static boolean findFunctionData(FunctionData functionDataNode, String functionName) 
+	public static void findFunctionData(FunctionData functionDataNode, String functionName) 
 	{
-		boolean functionFound = false;
-		
 		logger.info("\nSearching in currentNode: "+functionDataNode.functionName+ ", level: "+functionDataNode.level+ " lineNo: "+functionDataNode.traceLineNum+", thread: "+functionDataNode.threadId);
 		if(functionDataNode.parent != null)
 			logger.info("    Parent Node : "+functionDataNode.parent.functionName+ ", level: "+functionDataNode.parent.level+ " lineNo: "+functionDataNode.parent.traceLineNum+", thread: "+functionDataNode.threadId);
 		
-		
-		if(functionDataNode.functionName.toLowerCase().endsWith(functionName.toLowerCase()))
+		if((functionName.endsWith(".") && functionDataNode.functionName.toLowerCase().contains(functionName))  
+				|| (!functionName.endsWith(".*") && functionDataNode.functionName.toLowerCase().endsWith(functionName.toLowerCase())))
 		{
 			System.out.println("\n");
 			printTraceUp(functionDataNode);
-			return true;
+			functionFound = true;
 		}
 		
 		for (FunctionData currentNode : functionDataNode.children)
 		{
-	        if(findFunctionData(currentNode, functionName))
-	        {
-	        	functionFound = true;
-	        	//return true;
-	        }
+			findFunctionData(currentNode, functionName);
 		}
-	
-		return functionFound;
 	}
 
 	public static boolean executeCommand(String command) {
@@ -286,6 +329,8 @@ public class MethodTraceFilter {
 			commandList.add("/c");
 			Collections.addAll(commandList, command.split("\\s+"));
 
+			System.out.println("Executing command :" + command);
+			
 			Process p = new ProcessBuilder(commandList).start();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
 					p.getInputStream()));
