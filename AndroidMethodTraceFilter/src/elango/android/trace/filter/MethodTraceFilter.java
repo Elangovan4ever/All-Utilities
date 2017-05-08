@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class MethodTraceFilter {
 
 	private static String remoteTraceFile = "/storage/emulated/0/Android/data/com.example.emanickam.sampleapp/files/sampleapp.trace";
-	private static boolean PULL_TRACE_FILE = true;
+	private static boolean PULL_TRACE_FILE = false;
 
 	private static Logger logger;
 	private static String LOGFILENAME = "";
@@ -202,8 +202,8 @@ public class MethodTraceFilter {
 				
 				switch (getMenuOption()) {
 				case 0:
-					System.exit(0);
-
+					//System.exit(0);
+					break;	
 				case 1:
 					System.out.println("Please enter the class name: ");
 					br = new BufferedReader(new InputStreamReader(
@@ -264,10 +264,11 @@ public class MethodTraceFilter {
 		{
 			e.printStackTrace();
 		}
+		
 	}
 	
 	public static int getMenuOption() {
-		int option = 0;
+		int option = 1;
 		try {
 			System.out.println();
 			System.out.println("\n========\nMethod Tracer\n========");
