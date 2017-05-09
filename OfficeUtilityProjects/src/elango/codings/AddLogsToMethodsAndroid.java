@@ -7,8 +7,8 @@ import javax.sound.sampled.Line;
 
 public class AddLogsToMethodsAndroid {
 	
-	private static boolean testLocalFiles = false;
-	private static boolean enableLogs = false;
+	private static boolean testLocalFiles = true;
+	private static boolean enableLogs = true;
 	
 	public static int firstFuncLineNum = 0;
 	
@@ -26,9 +26,6 @@ public class AddLogsToMethodsAndroid {
 	private static boolean isInsideFunction = false;
 	private static boolean isFunctionReturnAnything = false;
 	private static boolean isInfiniteLoop = false;
-	
-	private static int openBracesCountForLoop = 0;
-	private static int openBracketsCountForLoop = 0;
 	
 	private static int SPLIT_TO_SEPARATE_LINE = 1;
 	private static int DONT_SPLIT_TO_SEPARATE_LINE = 2;
@@ -59,6 +56,33 @@ public class AddLogsToMethodsAndroid {
 			processFiles(path);
 		}
 		
+	}
+	
+	public static void addLogsToFile(File file)
+	{
+		String filename = file.getName();
+		if(filename.endsWith(".java"))
+		{
+			filesProcessedCount++;
+			printLogs("Processing "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+filename,true);
+			removeComments(file);
+			bringBracketAndBracesTogether(file);
+			makeReturnStmtsSingleLine(file);
+			makeConditionalStmtsSingleLine(file);
+			makeStmtsSignleLineByKey(file,"new ");
+			makeStmtsSignleLineByKey(file,"super");
+			makeStmtsSignleLineByKey(file,"this");
+			makeStmtsSignleLineByKey(file,"throw ");
+			makeStmtsSignleLineByKey(file,"Slog.");			
+			makeStmtsSignleLineByKey(file,"print");
+			makeStmtsSignleLineByKey(file,"throws ",SPLIT_TO_SEPARATE_LINE);
+			replaceAllByKey(file,"for (;;)","while (true)");
+			
+			updateFile(file);
+			insertImportStmts(file);
+			insertLogTag(file);
+			printLogs("Processed "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+filename,true);
+		}					
 	}
 	
 	public static void printLogs(String logMsg, boolean isEnabled) 
@@ -136,30 +160,7 @@ public class AddLogsToMethodsAndroid {
 		}
 	}
 	
-	public static void addLogsToFile(File file)
-	{
-		String filename = file.getName();
-		if(filename.endsWith(".java"))
-		{
-			filesProcessedCount++;
-			printLogs("Processing "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+filename,true);
-			removeComments(file);
-			bringBracketAndBracesTogether(file);
-			makeReturnStmtsSingleLine(file);
-			makeConditionalStmtsSingleLine(file);
-			makeStmtsSignleLineByKey(file,"new ");
-			makeStmtsSignleLineByKey(file,"super");
-			makeStmtsSignleLineByKey(file,"this");
-			makeStmtsSignleLineByKey(file,"throw ");
-			makeStmtsSignleLineByKey(file,"Slog.");			
-			makeStmtsSignleLineByKey(file,"print");
-			makeStmtsSignleLineByKey(file,"throws ",SPLIT_TO_SEPARATE_LINE);			
-			updateFile(file);
-			insertImportStmts(file);
-			insertLogTag(file);
-			printLogs("Processed "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+filename,true);
-		}					
-	}
+	
 	
 	public static String getEntryLogStr()
 	{
@@ -511,7 +512,7 @@ public class AddLogsToMethodsAndroid {
 					continue;
 				}
 				
-				if(isFoundOutsideLiteral(line, "return;") || isFoundOutsideLiteral(line, "return "))
+				if(isFoundOutsideLiteral(line, "return;") || isFoundOutsideLiteral(line, "return ") || line.trim().equals("return"))
 				{
 					if(isFoundOutsideLiteral(line, " new "))
 					{
@@ -655,6 +656,36 @@ public class AddLogsToMethodsAndroid {
 		}
 	}
 	
+	public static void replaceAllByKey(File file, String keyStr, String replaceStr)
+	{
+		try
+		{
+			String filename = file.getName();
+			BufferedReader fReader = new BufferedReader(new FileReader(file));
+			BufferedWriter fWriter = new BufferedWriter(new FileWriter(filename+"_tmp"));
+			String line = "";
+	
+			while ((line = fReader.readLine()) != null) {
+				
+				line = line.replace(keyStr, replaceStr);
+				
+				fWriter.write(line);
+				fWriter.newLine();
+			}
+			
+			fWriter.close();
+			fReader.close();
+			
+			file.delete();
+			File temp_file = new File(filename+"_tmp"); 
+			temp_file.renameTo(file);
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
 		
 	public static String createIndentFromLine(String line)
 	{
@@ -774,7 +805,7 @@ public class AddLogsToMethodsAndroid {
 					continue;
 				}
 				
-				if(isFoundOutsideLiteral(line, "while (true)") || isFoundOutsideLiteral(line,"while (true)")) //will never come out of loop so dont add exit log
+				if(isFoundOutsideLiteral(line, "while (true)") || isFoundOutsideLiteral(line,"while(true)") ) //will never come out of loop so dont add exit log
 				{
 					isInfiniteLoop = true;
 				}
@@ -800,8 +831,13 @@ public class AddLogsToMethodsAndroid {
 					openBracketCount = countOccurancesOutsideLiteral(line,"(");
 				}
 				
-				if(openBracketCount > 0)
+				if(isCondStmt)
 				{
+					if(isFoundOutsideLiteral(line, "{") || isFoundOutsideLiteral(line, "}"))
+					{
+						isCondStmt = false;
+					}
+						
 					openBracketCount -= countOccurancesOutsideLiteral(line,")");
 					if(openBracketCount > 0)
 					{
@@ -878,7 +914,7 @@ public class AddLogsToMethodsAndroid {
 						fWriter.newLine();
 						printLogs("updateFile Entry log is added");
 						
-						if(isFoundOutsideLiteral(nextLine, "while (true)") || isFoundOutsideLiteral(nextLine,"while (true)")) //will never come out of loop so dont add exit log
+						if(isFoundOutsideLiteral(nextLine, "while (true)") || isFoundOutsideLiteral(nextLine,"while(true)") ) //will never come out of loop so dont add exit log
 						{
 							isInfiniteLoop = true;
 						}
@@ -1004,7 +1040,8 @@ public class AddLogsToMethodsAndroid {
 
 			while ((line = fReader.readLine()) != null) {
 				lineNo++;
-				if(line.contains("class "+className+" "))
+				if(line.contains("class "+className+" ") || line.endsWith("class "+className)
+							|| line.contains("class "+className+"<"))
 				{
 					while(line != null && !line.trim().endsWith("{"))
 					{
