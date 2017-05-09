@@ -1,4 +1,20 @@
+/*
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.android.server;
+
 import com.android.internal.content.PackageMonitor;
 import com.android.internal.inputmethod.InputMethodSubtypeSwitchingController;
 import com.android.internal.inputmethod.InputMethodSubtypeSwitchingController.ImeSubtypeListItem;
@@ -16,9 +32,11 @@ import com.android.internal.view.IInputMethodSession;
 import com.android.internal.view.InputBindResult;
 import com.android.server.statusbar.StatusBarManagerService;
 import com.android.server.wm.WindowManagerService;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
+
 import android.app.ActivityManagerNative;
 import android.app.AppGlobals;
 import android.app.AlertDialog;
@@ -97,6 +115,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.RadioButton;
 import android.widget.Switch;
 import android.widget.TextView;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -108,31 +127,45 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+
+/**
+ * This class provides a system service that manages input methods.
+ */
 public class InputMethodManagerService extends IInputMethodManager.Stub
         implements ServiceConnection, Handler.Callback {
     static final boolean DEBUG = false;
     static final String TAG = "InputMethodManagerService";
+
     static final int MSG_SHOW_IM_PICKER = 1;
     static final int MSG_SHOW_IM_SUBTYPE_PICKER = 2;
     static final int MSG_SHOW_IM_SUBTYPE_ENABLER = 3;
     static final int MSG_SHOW_IM_CONFIG = 4;
+
     static final int MSG_UNBIND_INPUT = 1000;
     static final int MSG_BIND_INPUT = 1010;
     static final int MSG_SHOW_SOFT_INPUT = 1020;
     static final int MSG_HIDE_SOFT_INPUT = 1030;
     static final int MSG_ATTACH_TOKEN = 1040;
     static final int MSG_CREATE_SESSION = 1050;
+
     static final int MSG_START_INPUT = 2000;
     static final int MSG_RESTART_INPUT = 2010;
+
     static final int MSG_UNBIND_METHOD = 3000;
     static final int MSG_BIND_METHOD = 3010;
     static final int MSG_SET_ACTIVE = 3020;
     static final int MSG_SET_USER_ACTION_NOTIFICATION_SEQUENCE_NUMBER = 3040;
+
     static final int MSG_HARD_KEYBOARD_SWITCH_CHANGED = 4000;
+
     static final long TIME_TO_RECONNECT = 3 * 1000;
+
     static final int SECURE_SUGGESTION_SPANS_MAX_SIZE = 20;
+
     private static final int NOT_A_SUBTYPE_ID = InputMethodUtils.NOT_A_SUBTYPE_ID;
     private static final String TAG_TRY_SUPPRESSING_IME_SWITCHER = "TrySuppressingImeSwitcher";
+
+
     final Context mContext;
     final Resources mRes;
     final Handler mHandler;
@@ -145,23 +178,28 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
     private final HardKeyboardListener mHardKeyboardListener;
     private final WindowManagerService mWindowManagerService;
     private final AppOpsManager mAppOpsManager;
+
     final InputBindResult mNoBinding = new InputBindResult(null, null, null, -1, -1);
+
+    // All known input methods.  mMethodMap also serves as the global
+    // lock for this class.
     final ArrayList<InputMethodInfo> mMethodList = new ArrayList<InputMethodInfo>();
     final HashMap<String, InputMethodInfo> mMethodMap = new HashMap<String, InputMethodInfo>();
     private final LruCache<SuggestionSpan, InputMethodInfo> mSecureSuggestionSpans =
             new LruCache<SuggestionSpan, InputMethodInfo>(SECURE_SUGGESTION_SPANS_MAX_SIZE);
     private final InputMethodSubtypeSwitchingController mSwitchingController;
+
+    // Used to bring IME service up to visible adjustment while it is being shown.
     final ServiceConnection mVisibleConnection = new ServiceConnection() {
         @Override public void onServiceConnected(ComponentName name, IBinder service) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         @Override public void onServiceDisconnected(ComponentName name) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
     };
     boolean mVisibleBound = false;
+
+    // Ongoing notification
     private NotificationManager mNotificationManager;
     private KeyguardManager mKeyguardManager;
     private StatusBarManagerService mStatusBar;
@@ -170,82 +208,189 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
     private boolean mShowOngoingImeSwitcherForPhones;
     private boolean mNotificationShown;
     private final boolean mImeSelectedOnBoot;
+
     static class SessionState {
         final ClientState client;
         final IInputMethod method;
+
         IInputMethodSession session;
         InputChannel channel;
+
         @Override
         public String toString() {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return "SessionState{uid " + client.uid + " pid " + client.pid+ " method " + Integer.toHexString(System.identityHashCode(method))+ " session " + Integer.toHexString(System.identityHashCode(session))+ " channel " + channel+ "}";
+            return "SessionState{uid " + client.uid + " pid " + client.pid
+                    + " method " + Integer.toHexString(
+                            System.identityHashCode(method))
+                    + " session " + Integer.toHexString(
+                            System.identityHashCode(session))
+                    + " channel " + channel
+                    + "}";
         }
+
         SessionState(ClientState _client, IInputMethod _method,
                 IInputMethodSession _session, InputChannel _channel) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             client = _client;
             method = _method;
             session = _session;
             channel = _channel;
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
     }
+
     static final class ClientState {
         final IInputMethodClient client;
         final IInputContext inputContext;
         final int uid;
         final int pid;
         final InputBinding binding;
+
         boolean sessionRequested;
         SessionState curSession;
+
         @Override
         public String toString() {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return "ClientState{" + Integer.toHexString(System.identityHashCode(this)) + " uid " + uid+ " pid " + pid + "}";
+            return "ClientState{" + Integer.toHexString(
+                    System.identityHashCode(this)) + " uid " + uid
+                    + " pid " + pid + "}";
         }
+
         ClientState(IInputMethodClient _client, IInputContext _inputContext,
                 int _uid, int _pid) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             client = _client;
             inputContext = _inputContext;
             uid = _uid;
             pid = _pid;
             binding = new InputBinding(null, inputContext.asBinder(), uid, pid);
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
     }
+
     final HashMap<IBinder, ClientState> mClients
             = new HashMap<IBinder, ClientState>();
+
+    /**
+     * Set once the system is ready to run third party code.
+     */
     boolean mSystemReady;
+
+    /**
+     * Id of the currently selected input method.
+     */
     String mCurMethodId;
+
+    /**
+     * The current binding sequence number, incremented every time there is
+     * a new bind performed.
+     */
     int mCurSeq;
+
+    /**
+     * The client that is currently bound to an input method.
+     */
     ClientState mCurClient;
+
+    /**
+     * The last window token that gained focus.
+     */
     IBinder mCurFocusedWindow;
+
+    /**
+     * The input context last provided by the current client.
+     */
     IInputContext mCurInputContext;
+
+    /**
+     * The attributes last provided by the current client.
+     */
     EditorInfo mCurAttribute;
+
+    /**
+     * The input method ID of the input method service that we are currently
+     * connected to or in the process of connecting to.
+     */
     String mCurId;
+
+    /**
+     * The current subtype of the current input method.
+     */
     private InputMethodSubtype mCurrentSubtype;
+
+    // This list contains the pairs of InputMethodInfo and InputMethodSubtype.
     private final HashMap<InputMethodInfo, ArrayList<InputMethodSubtype>>
             mShortcutInputMethodsAndSubtypes =
                 new HashMap<InputMethodInfo, ArrayList<InputMethodSubtype>>();
+
+    // Was the keyguard locked when this client became current?
     private boolean mCurClientInKeyguard;
+
+    /**
+     * Set to true if our ServiceConnection is currently actively bound to
+     * a service (whether or not we have gotten its IBinder back yet).
+     */
     boolean mHaveConnection;
+
+    /**
+     * Set if the client has asked for the input method to be shown.
+     */
     boolean mShowRequested;
+
+    /**
+     * Set if we were explicitly told to show the input method.
+     */
     boolean mShowExplicitlyRequested;
+
+    /**
+     * Set if we were forced to be shown.
+     */
     boolean mShowForced;
+
+    /**
+     * Set if we last told the input method to show itself.
+     */
     boolean mInputShown;
+
+    /**
+     * The Intent used to connect to the current input method.
+     */
     Intent mCurIntent;
+
+    /**
+     * The token we have made for the currently active input method, to
+     * identify it in the future.
+     */
     IBinder mCurToken;
+
+    /**
+     * If non-null, this is the input method service we are currently connected
+     * to.
+     */
     IInputMethod mCurMethod;
+
+    /**
+     * Time that we last initiated a bind to the input method, to determine
+     * if we should try to disconnect and reconnect to it.
+     */
     long mLastBindTime;
+
+    /**
+     * Have we called mCurMethod.bindInput()?
+     */
     boolean mBoundToMethod;
+
+    /**
+     * Currently enabled session.  Only touched by service thread, not
+     * protected by a lock.
+     */
     SessionState mEnabledSession;
+
+    /**
+     * True if the screen is on.  The value is true initially.
+     */
     boolean mScreenOn = true;
+
     int mCurUserActionNotificationSequenceNumber = 0;
+
     int mBackDisposition = InputMethodService.BACK_DISPOSITION_DEFAULT;
     int mImeWindowVis;
+
     private AlertDialog.Builder mDialogBuilder;
     private AlertDialog mSwitchingDialog;
     private View mSwitchingDialogTitleView;
@@ -255,11 +400,12 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
     private boolean mShowImeWithHardKeyboard;
     private final MyPackageMonitor mMyPackageMonitor = new MyPackageMonitor();
     private final IPackageManager mIPackageManager;
+
     class SettingsObserver extends ContentObserver {
         String mLastEnabled = "";
+
         SettingsObserver(Handler handler) {
             super(handler);
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.DEFAULT_INPUT_METHOD), false, this);
@@ -269,10 +415,9 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     Settings.Secure.SELECTED_INPUT_METHOD_SUBTYPE), false, this);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.SHOW_IME_WITH_HARD_KEYBOARD), false, this);
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         @Override public void onChange(boolean selfChange, Uri uri) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             final Uri showImeUri =
                     Settings.Secure.getUriFor(Settings.Secure.SHOW_IME_WITH_HARD_KEYBOARD);
             synchronized (mMethodMap) {
@@ -288,50 +433,47 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     updateInputMethodsFromSettingsLocked(enabledChanged);
                 }
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
     }
+
     class ImmsBroadcastReceiver extends android.content.BroadcastReceiver {
         private void updateActive() {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+            // Inform the current client of the change in active status
             if (mCurClient != null && mCurClient.client != null) {
                 executeOrSendMessage(mCurClient.client, mCaller.obtainMessageIO(
                         MSG_SET_ACTIVE, mScreenOn ? 1 : 0, mCurClient));
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         @Override
         public void onReceive(Context context, Intent intent) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             final String action = intent.getAction();
             if (Intent.ACTION_SCREEN_ON.equals(action)) {
                 mScreenOn = true;
                 refreshImeWindowVisibilityLocked();
                 updateActive();
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {
                 mScreenOn = false;
                 setImeWindowVisibilityStatusHiddenLocked();
                 updateActive();
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             } else if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(action)) {
                 hideInputMethodMenu();
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+                // No need to updateActive
                 return;
-            } else if (Intent.ACTION_USER_ADDED.equals(action)|| Intent.ACTION_USER_REMOVED.equals(action)) {
+            } else if (Intent.ACTION_USER_ADDED.equals(action)
+                    || Intent.ACTION_USER_REMOVED.equals(action)) {
                 updateCurrentProfileIds();
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             } else {
                 Slog.w(TAG, "Unexpected intent " + intent);
             }
         }
     }
+
     class MyPackageMonitor extends PackageMonitor {
         private boolean isChangingPackagesOfCurrentUser() {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             final int userId = getChangingUserId();
             final boolean retval = userId == mSettings.getCurrentUserId();
             if (DEBUG) {
@@ -339,15 +481,13 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     Slog.d(TAG, "--- ignore this call back from a background user: " + userId);
                 }
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return retval;
         }
+
         @Override
         public boolean onHandleForceStop(Intent intent, String[] packages, int uid, boolean doit) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             if (!isChangingPackagesOfCurrentUser()) {
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return false;
+                return false;
             }
             synchronized (mMethodMap) {
                 String curInputMethodId = mSettings.getSelectedInputMethod();
@@ -359,12 +499,10 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                             for (String pkg : packages) {
                                 if (imi.getPackageName().equals(pkg)) {
                                     if (!doit) {
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                                    return true;
+                                        return true;
                                     }
                                     resetSelectedInputMethodAndSubtypeLocked("");
                                     chooseNewDefaultIMELocked();
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                                     return true;
                                 }
                             }
@@ -372,15 +510,13 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     }
                 }
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return false;
         }
+
         @Override
         public void onSomePackagesChanged() {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             if (!isChangingPackagesOfCurrentUser()) {
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return;
+                return;
             }
             synchronized (mMethodMap) {
                 InputMethodInfo curIm = null;
@@ -393,23 +529,29 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         if (imiId.equals(curInputMethodId)) {
                             curIm = imi;
                         }
+
                         int change = isPackageDisappearing(imi.getPackageName());
                         if (isPackageModified(imi.getPackageName())) {
                             mFileManager.deleteAllInputMethodSubtypes(imiId);
                         }
-                        if (change == PACKAGE_TEMPORARY_CHANGE|| change == PACKAGE_PERMANENT_CHANGE) {
+                        if (change == PACKAGE_TEMPORARY_CHANGE
+                                || change == PACKAGE_PERMANENT_CHANGE) {
                             Slog.i(TAG, "Input method uninstalled, disabling: "
                                     + imi.getComponent());
                             setInputMethodEnabledLocked(imi.getId(), false);
                         }
                     }
                 }
+
                 buildInputMethodListLocked(
-                        mMethodList, mMethodMap, false );
+                        mMethodList, mMethodMap, false /* resetDefaultEnabledIme */);
+
                 boolean changed = false;
+
                 if (curIm != null) {
                     int change = isPackageDisappearing(curIm.getPackageName()); 
-                    if (change == PACKAGE_TEMPORARY_CHANGE|| change == PACKAGE_PERMANENT_CHANGE) {
+                    if (change == PACKAGE_TEMPORARY_CHANGE
+                            || change == PACKAGE_PERMANENT_CHANGE) {
                         ServiceInfo si = null;
                         try {
                             si = mIPackageManager.getServiceInfo(
@@ -417,6 +559,8 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         } catch (RemoteException ex) {
                         }
                         if (si == null) {
+                            // Uh oh, current input method is no longer around!
+                            // Pick another one...
                             Slog.i(TAG, "Current input method removed: " + curInputMethodId);
                             setImeWindowVisibilityStatusHiddenLocked();
                             if (!chooseNewDefaultIMELocked()) {
@@ -428,65 +572,67 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         }
                     }
                 }
+
                 if (curIm == null) {
+                    // We currently don't have a default input method... is
+                    // one now available?
                     changed = chooseNewDefaultIMELocked();
                 }
+
                 if (changed) {
                     updateFromSettingsLocked(false);
                 }
             }
         }
     }
+
     private static final class MethodCallback extends IInputSessionCallback.Stub {
         private final InputMethodManagerService mParentIMMS;
         private final IInputMethod mMethod;
         private final InputChannel mChannel;
+
         MethodCallback(InputMethodManagerService imms, IInputMethod method,
                 InputChannel channel) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             mParentIMMS = imms;
             mMethod = method;
             mChannel = channel;
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         @Override
         public void sessionCreated(IInputMethodSession session) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             long ident = Binder.clearCallingIdentity();
             try {
                 mParentIMMS.onSessionCreated(mMethod, session, mChannel);
             } finally {
                 Binder.restoreCallingIdentity(ident);
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
     }
+
     private class HardKeyboardListener
             implements WindowManagerService.OnHardKeyboardStatusChangeListener {
         @Override
         public void onHardKeyboardStatusChange(boolean available) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             mHandler.sendMessage(mHandler.obtainMessage(MSG_HARD_KEYBOARD_SWITCH_CHANGED,
                         available ? 1 : 0));
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         public void handleHardKeyboardStatusChange(boolean available) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             if (DEBUG) {
                 Slog.w(TAG, "HardKeyboardStatusChanged: available=" + available);
             }
             synchronized(mMethodMap) {
-                if (mSwitchingDialog != null && mSwitchingDialogTitleView != null&& mSwitchingDialog.isShowing()) {
+                if (mSwitchingDialog != null && mSwitchingDialogTitleView != null
+                        && mSwitchingDialog.isShowing()) {
                     mSwitchingDialogTitleView.findViewById(
                             com.android.internal.R.id.hard_keyboard_section).setVisibility(
                                     available ? View.VISIBLE : View.GONE);
                 }
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
     }
+
     public InputMethodManagerService(Context context, WindowManagerService windowManager) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         mIPackageManager = AppGlobals.getPackageManager();
         mContext = context;
         mRes = context.getResources();
@@ -496,29 +642,33 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         mCaller = new HandlerCaller(context, null, new HandlerCaller.Callback() {
             @Override
             public void executeMessage(Message msg) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 handleMessage(msg);
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             }
-        }, true );
+        }, true /*asyncHandler*/);
         mWindowManagerService = windowManager;
         mAppOpsManager = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
         mHardKeyboardListener = new HardKeyboardListener();
         mHasFeature = context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS);
+
         mImeSwitcherNotification = new Notification();
         mImeSwitcherNotification.icon = com.android.internal.R.drawable.ic_notification_ime_default;
         mImeSwitcherNotification.when = 0;
         mImeSwitcherNotification.flags = Notification.FLAG_ONGOING_EVENT;
         mImeSwitcherNotification.tickerText = null;
-        mImeSwitcherNotification.defaults = 0; 
+        mImeSwitcherNotification.defaults = 0; // please be quiet
         mImeSwitcherNotification.sound = null;
         mImeSwitcherNotification.vibrate = null;
+
+        // Tag this notification specially so SystemUI knows it's important
         mImeSwitcherNotification.extras.putBoolean(Notification.EXTRA_ALLOW_DURING_SETUP, true);
         mImeSwitcherNotification.category = Notification.CATEGORY_SYSTEM;
+
         Intent intent = new Intent(Settings.ACTION_SHOW_INPUT_METHOD_PICKER);
         mImeSwitchPendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+
         mShowOngoingImeSwitcherForPhones = false;
+
         final IntentFilter broadcastFilter = new IntentFilter();
         broadcastFilter.addAction(Intent.ACTION_SCREEN_ON);
         broadcastFilter.addAction(Intent.ACTION_SCREEN_OFF);
@@ -526,6 +676,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         broadcastFilter.addAction(Intent.ACTION_USER_ADDED);
         broadcastFilter.addAction(Intent.ACTION_USER_REMOVED);
         mContext.registerReceiver(new ImmsBroadcastReceiver(), broadcastFilter);
+
         mNotificationShown = false;
         int userId = 0;
         try {
@@ -533,7 +684,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     new IUserSwitchObserver.Stub() {
                         @Override
                         public void onUserSwitching(int newUserId, IRemoteCallback reply) {
-                            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                             synchronized(mMethodMap) {
                                 switchUserLocked(newUserId);
                             }
@@ -543,8 +693,8 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                                 } catch (RemoteException e) {
                                 }
                             }
-                        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                         }
+
                         @Override
                         public void onUserSwitchComplete(int newUserId) throws RemoteException {
                         }
@@ -554,6 +704,8 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             Slog.w(TAG, "Couldn't get current user ID; guessing it's 0", e);
         }
         mMyPackageMonitor.register(mContext, null, UserHandle.ALL, true);
+
+        // mSettings should be created before buildInputMethodListLocked
         mSettings = new InputMethodSettings(
                 mRes, context.getContentResolver(), mMethodMap, mMethodList, userId);
         updateCurrentProfileIds();
@@ -562,50 +714,59 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             mSwitchingController = InputMethodSubtypeSwitchingController.createInstanceLocked(
                     mSettings, context);
         }
+
+        // Just checking if defaultImiId is empty or not
         final String defaultImiId = mSettings.getSelectedInputMethod();
         if (DEBUG) {
             Slog.d(TAG, "Initial default ime = " + defaultImiId);
         }
         mImeSelectedOnBoot = !TextUtils.isEmpty(defaultImiId);
+
         synchronized (mMethodMap) {
             buildInputMethodListLocked(mMethodList, mMethodMap,
-                    !mImeSelectedOnBoot );
+                    !mImeSelectedOnBoot /* resetDefaultEnabledIme */);
         }
         mSettings.enableAllIMEsIfThereIsNoEnabledIME();
+
         if (!mImeSelectedOnBoot) {
             Slog.w(TAG, "No IME selected. Choose the most applicable IME.");
             synchronized (mMethodMap) {
                 resetDefaultImeLocked(context);
             }
         }
+
         mSettingsObserver = new SettingsObserver(mHandler);
         synchronized (mMethodMap) {
             updateFromSettingsLocked(true);
         }
+
+        // IMMS wants to receive Intent.ACTION_LOCALE_CHANGED in order to update the current IME
+        // according to the new system locale.
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_LOCALE_CHANGED);
         mContext.registerReceiver(
                 new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
-                        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                         synchronized(mMethodMap) {
                             resetStateIfCurrentLocaleChangedLocked();
                         }
-                    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     }
                 }, filter);
     }
+
     private void resetDefaultImeLocked(Context context) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        if (mCurMethodId != null&& !InputMethodUtils.isSystemIme(mMethodMap.get(mCurMethodId))) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                return;
+        // Do not reset the default (current) IME when it is a 3rd-party IME
+        if (mCurMethodId != null
+                && !InputMethodUtils.isSystemIme(mMethodMap.get(mCurMethodId))) {
+            return;
         }
+
         InputMethodInfo defIm = null;
         for (InputMethodInfo imi : mMethodList) {
             if (defIm == null) {
-                if (InputMethodUtils.isValidSystemDefaultIme(mSystemReady, imi, context)) {
+                if (InputMethodUtils.isValidSystemDefaultIme(
+                        mSystemReady, imi, context)) {
                     defIm = imi;
                     Slog.i(TAG, "Selected default: " + imi.getId());
                 }
@@ -624,15 +785,16 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             setSelectedInputMethodAndSubtypeLocked(defIm, NOT_A_SUBTYPE_ID, false);
         }
     }
+
     private void resetAllInternalStateLocked(final boolean updateOnlyWhenLocaleChanged,
             final boolean resetDefaultEnabledIme) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!mSystemReady) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            // not system ready
+            return;
         }
         final Locale newLocale = mRes.getConfiguration().locale;
-        if (!updateOnlyWhenLocaleChanged|| (newLocale != null && !newLocale.equals(mLastSystemLocale))) {
+        if (!updateOnlyWhenLocaleChanged
+                || (newLocale != null && !newLocale.equals(mLastSystemLocale))) {
             if (!updateOnlyWhenLocaleChanged) {
                 hideCurrentInputLocked(0, null);
                 mCurMethodId = null;
@@ -645,9 +807,12 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             if (!updateOnlyWhenLocaleChanged) {
                 final String selectedImiId = mSettings.getSelectedInputMethod();
                 if (TextUtils.isEmpty(selectedImiId)) {
+                    // This is the first time of the user switch and
+                    // set the current ime to the proper one.
                     resetDefaultImeLocked(mContext);
                 }
             } else {
+                // If the locale is changed, needs to reset the default ime
                 resetDefaultImeLocked(mContext);
             }
             updateFromSettingsLocked(true);
@@ -661,55 +826,61 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     private void resetStateIfCurrentLocaleChangedLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        resetAllInternalStateLocked(true ,
-                true );
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        resetAllInternalStateLocked(true /* updateOnlyWhenLocaleChanged */,
+                true /* resetDefaultImeLocked */);
     }
+
     private void switchUserLocked(int newUserId) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         mSettings.setCurrentUserId(newUserId);
         updateCurrentProfileIds();
+        // InputMethodFileManager should be reset when the user is changed
         mFileManager = new InputMethodFileManager(mMethodMap, newUserId);
         final String defaultImiId = mSettings.getSelectedInputMethod();
+        // For secondary users, the list of enabled IMEs may not have been updated since the
+        // callbacks to PackageMonitor are ignored for the secondary user. Here, defaultImiId may
+        // not be empty even if the IME has been uninstalled by the primary user.
+        // Even in such cases, IMMS works fine because it will find the most applicable
+        // IME for that user.
         final boolean initialUserSwitch = TextUtils.isEmpty(defaultImiId);
         if (DEBUG) {
             Slog.d(TAG, "Switch user: " + newUserId + " current ime = " + defaultImiId);
         }
-        resetAllInternalStateLocked(false  ,
-                initialUserSwitch );
+        resetAllInternalStateLocked(false  /* updateOnlyWhenLocaleChanged */,
+                initialUserSwitch /* needsToResetDefaultIme */);
         if (initialUserSwitch) {
             InputMethodUtils.setNonSelectedSystemImesDisabledUntilUsed(mContext.getPackageManager(),
                     mSettings.getEnabledInputMethodListLocked());
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     void updateCurrentProfileIds() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         List<UserInfo> profiles =
                 UserManager.get(mContext).getProfiles(mSettings.getCurrentUserId());
-        int[] currentProfileIds = new int[profiles.size()]; 
+        int[] currentProfileIds = new int[profiles.size()]; // profiles will not be null
         for (int i = 0; i < currentProfileIds.length; i++) {
             currentProfileIds[i] = profiles.get(i).id;
         }
         mSettings.setCurrentProfileIds(currentProfileIds);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     @Override
     public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
             throws RemoteException {
         try {
-        return super.onTransact(code, data, reply, flags);
+            return super.onTransact(code, data, reply, flags);
         } catch (RuntimeException e) {
+            // The input method manager only throws security exceptions, so let's
+            // log all others.
             if (!(e instanceof SecurityException)) {
                 Slog.wtf(TAG, "Input Method Manager Crash", e);
             }
             throw e;
         }
     }
+
     public void systemRunning(StatusBarManagerService statusBar) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         synchronized (mMethodMap) {
             if (DEBUG) {
                 Slog.d(TAG, "--- systemReady");
@@ -730,7 +901,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                             mHardKeyboardListener);
                 }
                 buildInputMethodListLocked(mMethodList, mMethodMap,
-                        !mImeSelectedOnBoot );
+                        !mImeSelectedOnBoot /* resetDefaultEnabledIme */);
                 if (!mImeSelectedOnBoot) {
                     Slog.w(TAG, "Reset the default IME as \"Resource\" is ready here.");
                     resetStateIfCurrentLocaleChangedLocked();
@@ -746,37 +917,40 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void setImeWindowVisibilityStatusHiddenLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         mImeWindowVis = 0;
         updateImeWindowStatusLocked();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void refreshImeWindowVisibilityLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         final Configuration conf = mRes.getConfiguration();
         final boolean haveHardKeyboard = conf.keyboard
                 != Configuration.KEYBOARD_NOKEYS;
         final boolean hardKeyShown = haveHardKeyboard
                 && conf.hardKeyboardHidden
                         != Configuration.HARDKEYBOARDHIDDEN_YES;
+
         final boolean isScreenLocked = isKeyguardLocked();
         final boolean inputActive = !isScreenLocked && (mInputShown || hardKeyShown);
+        // We assume the softkeyboard is shown when the input is active as long as the
+        // hard keyboard is not shown.
         final boolean inputVisible = inputActive && !hardKeyShown;
         mImeWindowVis = (inputActive ? InputMethodService.IME_ACTIVE : 0)
                 | (inputVisible ? InputMethodService.IME_VISIBLE : 0);
         updateImeWindowStatusLocked();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void updateImeWindowStatusLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         setImeWindowStatus(mCurToken, mImeWindowVis, mBackDisposition);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
+    // ---------------------------------------------------------------------------------------
+    // Check whether or not this is a valid IPC. Assumes an IPC is valid when either
+    // 1) it comes from the system process
+    // 2) the calling process' user id is identical to the current user id IMMS thinks.
     private boolean calledFromValidUser() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         final int uid = Binder.getCallingUid();
         final int userId = UserHandle.getUserId(uid);
         if (DEBUG) {
@@ -787,73 +961,83 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     + InputMethodUtils.getApiCallStack());
         }
         if (uid == Process.SYSTEM_UID || mSettings.isCurrentProfile(userId)) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return true;
+            return true;
         }
-        if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.INTERACT_ACROSS_USERS_FULL)== PackageManager.PERMISSION_GRANTED) {
+
+        // Caveat: A process which has INTERACT_ACROSS_USERS_FULL gets results for the
+        // foreground user, not for the user of that process. Accordingly InputMethodManagerService
+        // must not manage background users' states in any functions.
+        // Note that privacy-sensitive IPCs, such as setInputMethod, are still securely guarded
+        // by a token.
+        if (mContext.checkCallingOrSelfPermission(
+                android.Manifest.permission.INTERACT_ACROSS_USERS_FULL)
+                        == PackageManager.PERMISSION_GRANTED) {
             if (DEBUG) {
                 Slog.d(TAG, "--- Access granted because the calling process has "
                         + "the INTERACT_ACROSS_USERS_FULL permission");
             }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return true;
         }
         Slog.w(TAG, "--- IPC called from background users. Ignore. \n"
                 + InputMethodUtils.getStackTrace());
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                return false;
-    }
-    private boolean calledWithValidToken(IBinder token) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        if (token == null || mCurToken != token) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return false;
-        }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return true;
     }
-    private boolean bindCurrentInputMethodService(
-            Intent service, ServiceConnection conn, int flags) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        if (service == null || conn == null) {
-            Slog.e(TAG, "--- bind failed: service = " + service + ", conn = " + conn);
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
+
+    /**
+     * Returns true iff the caller is identified to be the current input method with the token.
+     * @param token The window token given to the input method when it was started.
+     * @return true if and only if non-null valid token is specified.
+     */
+    private boolean calledWithValidToken(IBinder token) {
+        if (token == null || mCurToken != token) {
             return false;
         }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return mContext.bindServiceAsUser(service, conn, flags,new UserHandle(mSettings.getCurrentUserId()));
+        return true;
     }
+
+    private boolean bindCurrentInputMethodService(
+            Intent service, ServiceConnection conn, int flags) {
+        if (service == null || conn == null) {
+            Slog.e(TAG, "--- bind failed: service = " + service + ", conn = " + conn);
+            return false;
+        }
+        return mContext.bindServiceAsUser(service, conn, flags,
+                new UserHandle(mSettings.getCurrentUserId()));
+    }
+
     @Override
     public List<InputMethodInfo> getInputMethodList() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // TODO: Make this work even for non-current users?
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return Collections.emptyList();
+            return Collections.emptyList();
         }
         synchronized (mMethodMap) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return new ArrayList<InputMethodInfo>(mMethodList);
+            return new ArrayList<InputMethodInfo>(mMethodList);
         }
     }
+
     @Override
     public List<InputMethodInfo> getEnabledInputMethodList() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // TODO: Make this work even for non-current users?
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return Collections.emptyList();
+            return Collections.emptyList();
         }
         synchronized (mMethodMap) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return mSettings.getEnabledInputMethodListLocked();
+            return mSettings.getEnabledInputMethodListLocked();
         }
     }
+
+    /**
+     * @param imiId if null, returns enabled subtypes for the current imi
+     * @return enabled subtypes of the specified imi
+     */
     @Override
     public List<InputMethodSubtype> getEnabledInputMethodSubtypeList(String imiId,
             boolean allowsImplicitlySelectedSubtypes) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // TODO: Make this work even for non-current users?
         if (!calledFromValidUser()) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return Collections.<InputMethodSubtype>emptyList();
+            return Collections.<InputMethodSubtype>emptyList();
         }
         synchronized (mMethodMap) {
             final InputMethodInfo imi;
@@ -863,32 +1047,29 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 imi = mMethodMap.get(imiId);
             }
             if (imi == null) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return Collections.<InputMethodSubtype>emptyList();
+                return Collections.<InputMethodSubtype>emptyList();
             }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return mSettings.getEnabledInputMethodSubtypeListLocked(mContext, imi, allowsImplicitlySelectedSubtypes);
+            return mSettings.getEnabledInputMethodSubtypeListLocked(
+                    mContext, imi, allowsImplicitlySelectedSubtypes);
         }
     }
+
     @Override
     public void addClient(IInputMethodClient client,
             IInputContext inputContext, int uid, int pid) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
             mClients.put(client.asBinder(), new ClientState(client,
                     inputContext, uid, pid));
         }
     }
+
     @Override
     public void removeClient(IInputMethodClient client) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
             ClientState cs = mClients.remove(client.asBinder());
@@ -897,20 +1078,20 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     void executeOrSendMessage(IInterface target, Message msg) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
          if (target.asBinder() instanceof Binder) {
              mCaller.sendMessage(msg);
          } else {
              handleMessage(msg);
              msg.recycle();
          }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     void unbindCurrentClientLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (mCurClient != null) {
-            if (DEBUG) Slog.v(TAG, "unbindCurrentInputLocked: client = "+ mCurClient.client.asBinder());
+            if (DEBUG) Slog.v(TAG, "unbindCurrentInputLocked: client = "
+                    + mCurClient.client.asBinder());
             if (mBoundToMethod) {
                 mBoundToMethod = false;
                 if (mCurMethod != null) {
@@ -918,18 +1099,19 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                             MSG_UNBIND_INPUT, mCurMethod));
                 }
             }
+
             executeOrSendMessage(mCurClient.client, mCaller.obtainMessageIO(
                     MSG_SET_ACTIVE, 0, mCurClient));
             executeOrSendMessage(mCurClient.client, mCaller.obtainMessageIO(
                     MSG_UNBIND_METHOD, mCurSeq, mCurClient.client));
             mCurClient.sessionRequested = false;
             mCurClient = null;
+
             hideInputMethodMenuLocked();
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private int getImeShowFlags() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         int flags = 0;
         if (mShowForced) {
             flags |= InputMethod.SHOW_FORCED
@@ -937,22 +1119,20 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         } else if (mShowExplicitlyRequested) {
             flags |= InputMethod.SHOW_EXPLICIT;
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return flags;
     }
+
     private int getAppShowFlags() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         int flags = 0;
         if (mShowForced) {
             flags |= InputMethodManager.SHOW_FORCED;
         } else if (!mShowExplicitlyRequested) {
             flags |= InputMethodManager.SHOW_IMPLICIT;
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return flags;
     }
+
     InputBindResult attachNewInputLocked(boolean initial) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!mBoundToMethod) {
             executeOrSendMessage(mCurMethod, mCaller.obtainMessageOO(
                     MSG_BIND_INPUT, mCurMethod, mCurClient.binding));
@@ -970,98 +1150,135 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             if (DEBUG) Slog.v(TAG, "Attach new input asks to show input");
             showCurrentInputLocked(getAppShowFlags(), null);
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return new InputBindResult(session.session,(session.channel != null ? session.channel.dup() : null),mCurId, mCurSeq, mCurUserActionNotificationSequenceNumber);
+        return new InputBindResult(session.session,
+                (session.channel != null ? session.channel.dup() : null),
+                mCurId, mCurSeq, mCurUserActionNotificationSequenceNumber);
     }
+
     InputBindResult startInputLocked(IInputMethodClient client,
             IInputContext inputContext, EditorInfo attribute, int controlFlags) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // If no method is currently selected, do nothing.
         if (mCurMethodId == null) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return mNoBinding;
+            return mNoBinding;
         }
+
         ClientState cs = mClients.get(client.asBinder());
         if (cs == null) {
             throw new IllegalArgumentException("unknown client "
                     + client.asBinder());
         }
+
         try {
             if (!mIWindowManager.inputMethodClientHasFocus(cs.client)) {
+                // Check with the window manager to make sure this client actually
+                // has a window with focus.  If not, reject.  This is thread safe
+                // because if the focus changes some time before or after, the
+                // next client receiving focus that has any interest in input will
+                // be calling through here after that change happens.
                 Slog.w(TAG, "Starting input on non-focused client " + cs.client
                         + " (uid=" + cs.uid + " pid=" + cs.pid + ")");
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return null;
+                return null;
             }
         } catch (RemoteException e) {
         }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
         return startInputUncheckedLocked(cs, inputContext, attribute, controlFlags);
     }
+
     InputBindResult startInputUncheckedLocked(ClientState cs,
             IInputContext inputContext, EditorInfo attribute, int controlFlags) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // If no method is currently selected, do nothing.
         if (mCurMethodId == null) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return mNoBinding;
+            return mNoBinding;
         }
+
         if (mCurClient != cs) {
+            // Was the keyguard locked when switching over to the new client?
             mCurClientInKeyguard = isKeyguardLocked();
+            // If the client is changing, we need to switch over to the new
+            // one.
             unbindCurrentClientLocked();
-            if (DEBUG) Slog.v(TAG, "switching to client: client = "+ cs.client.asBinder() + " keyguard=" + mCurClientInKeyguard);
+            if (DEBUG) Slog.v(TAG, "switching to client: client = "
+                    + cs.client.asBinder() + " keyguard=" + mCurClientInKeyguard);
+
+            // If the screen is on, inform the new client it is active
             if (mScreenOn) {
                 executeOrSendMessage(cs.client, mCaller.obtainMessageIO(
                         MSG_SET_ACTIVE, mScreenOn ? 1 : 0, cs));
             }
         }
+
+        // Bump up the sequence for this client and attach it.
         mCurSeq++;
         if (mCurSeq <= 0) mCurSeq = 1;
         mCurClient = cs;
         mCurInputContext = inputContext;
         mCurAttribute = attribute;
+
+        // Check if the input method is changing.
         if (mCurId != null && mCurId.equals(mCurMethodId)) {
             if (cs.curSession != null) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return attachNewInputLocked((controlFlags&InputMethodManager.CONTROL_START_INITIAL) != 0);
+                // Fast case: if we are already connected to the input method,
+                // then just return it.
+                return attachNewInputLocked(
+                        (controlFlags&InputMethodManager.CONTROL_START_INITIAL) != 0);
             }
             if (mHaveConnection) {
                 if (mCurMethod != null) {
+                    // Return to client, and we will get back with it when
+                    // we have had a session made for it.
                     requestClientSessionLocked(cs);
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                    return new InputBindResult(null, null, mCurId, mCurSeq,mCurUserActionNotificationSequenceNumber);
-                } else if (SystemClock.uptimeMillis()< (mLastBindTime+TIME_TO_RECONNECT)) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return new InputBindResult(null, null, mCurId, mCurSeq,mCurUserActionNotificationSequenceNumber);
+                    return new InputBindResult(null, null, mCurId, mCurSeq,
+                            mCurUserActionNotificationSequenceNumber);
+                } else if (SystemClock.uptimeMillis()
+                        < (mLastBindTime+TIME_TO_RECONNECT)) {
+                    // In this case we have connected to the service, but
+                    // don't yet have its interface.  If it hasn't been too
+                    // long since we did the connection, we'll return to
+                    // the client and wait to get the service interface so
+                    // we can report back.  If it has been too long, we want
+                    // to fall through so we can try a disconnect/reconnect
+                    // to see if we can get back in touch with the service.
+                    return new InputBindResult(null, null, mCurId, mCurSeq,
+                            mCurUserActionNotificationSequenceNumber);
                 } else {
                     EventLog.writeEvent(EventLogTags.IMF_FORCE_RECONNECT_IME,
                             mCurMethodId, SystemClock.uptimeMillis()-mLastBindTime, 0);
                 }
             }
         }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
         return startInputInnerLocked();
     }
+
     InputBindResult startInputInnerLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (mCurMethodId == null) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return mNoBinding;
+            return mNoBinding;
         }
+
         if (!mSystemReady) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return new InputBindResult(null, null, mCurMethodId, mCurSeq,mCurUserActionNotificationSequenceNumber);
+            // If the system is not yet ready, we shouldn't be running third
+            // party code.
+            return new InputBindResult(null, null, mCurMethodId, mCurSeq,
+                    mCurUserActionNotificationSequenceNumber);
         }
+
         InputMethodInfo info = mMethodMap.get(mCurMethodId);
         if (info == null) {
             throw new IllegalArgumentException("Unknown id: " + mCurMethodId);
         }
+
         unbindCurrentMethodLocked(false, true);
+
         mCurIntent = new Intent(InputMethod.SERVICE_INTERFACE);
         mCurIntent.setComponent(info.getComponent());
         mCurIntent.putExtra(Intent.EXTRA_CLIENT_LABEL,
                 com.android.internal.R.string.input_method_binding_label);
         mCurIntent.putExtra(Intent.EXTRA_CLIENT_INTENT, PendingIntent.getActivity(
                 mContext, 0, new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS), 0));
-        if (bindCurrentInputMethodService(mCurIntent, this, Context.BIND_AUTO_CREATE| Context.BIND_NOT_VISIBLE | Context.BIND_NOT_FOREGROUND| Context.BIND_SHOWING_UI)) {
+        if (bindCurrentInputMethodService(mCurIntent, this, Context.BIND_AUTO_CREATE
+                | Context.BIND_NOT_VISIBLE | Context.BIND_NOT_FOREGROUND
+                | Context.BIND_SHOWING_UI)) {
             mLastBindTime = SystemClock.uptimeMillis();
             mHaveConnection = true;
             mCurId = info.getId();
@@ -1072,49 +1289,44 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         WindowManager.LayoutParams.TYPE_INPUT_METHOD);
             } catch (RemoteException e) {
             }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return new InputBindResult(null, null, mCurId, mCurSeq,mCurUserActionNotificationSequenceNumber);
+            return new InputBindResult(null, null, mCurId, mCurSeq,
+                    mCurUserActionNotificationSequenceNumber);
         } else {
             mCurIntent = null;
             Slog.w(TAG, "Failure connecting to input method service: "
                     + mCurIntent);
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return null;
     }
+
     @Override
     public InputBindResult startInput(IInputMethodClient client,
             IInputContext inputContext, EditorInfo attribute, int controlFlags) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return null;
+            return null;
         }
         synchronized (mMethodMap) {
             final long ident = Binder.clearCallingIdentity();
             try {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return startInputLocked(client, inputContext, attribute, controlFlags);
+                return startInputLocked(client, inputContext, attribute, controlFlags);
             } finally {
                 Binder.restoreCallingIdentity(ident);
             }
         }
     }
+
     @Override
     public void finishInput(IInputMethodClient client) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         synchronized (mMethodMap) {
             if (mCurIntent != null && name.equals(mCurIntent.getComponent())) {
                 mCurMethod = IInputMethod.Stub.asInterface(service);
                 if (mCurToken == null) {
                     Slog.w(TAG, "Service connected without a token!");
                     unbindCurrentMethodLocked(false, false);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     return;
                 }
                 if (DEBUG) Slog.v(TAG, "Initiating attach with token: " + mCurToken);
@@ -1127,11 +1339,12 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     void onSessionCreated(IInputMethod method, IInputMethodSession session,
             InputChannel channel) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         synchronized (mMethodMap) {
-            if (mCurMethod != null && method != null&& mCurMethod.asBinder() == method.asBinder()) {
+            if (mCurMethod != null && method != null
+                    && mCurMethod.asBinder() == method.asBinder()) {
                 if (mCurClient != null) {
                     clearClientSessionLocked(mCurClient);
                     mCurClient.curSession = new SessionState(mCurClient,
@@ -1141,27 +1354,31 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         executeOrSendMessage(mCurClient.client, mCaller.obtainMessageOO(
                                 MSG_BIND_METHOD, mCurClient.client, res));
                     }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     return;
                 }
             }
         }
+
+        // Session abandoned.  Close its associated input channel.
         channel.dispose();
     }
+
     void unbindCurrentMethodLocked(boolean reportToClient, boolean savePosition) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (mVisibleBound) {
             mContext.unbindService(mVisibleConnection);
             mVisibleBound = false;
         }
+
         if (mHaveConnection) {
             mContext.unbindService(this);
             mHaveConnection = false;
         }
+
         if (mCurToken != null) {
             try {
                 if (DEBUG) Slog.v(TAG, "Removing window token: " + mCurToken);
                 if ((mImeWindowVis & InputMethodService.IME_ACTIVE) != 0 && savePosition) {
+                    // The current IME is shown. Hence an IME switch (transition) is happening.
                     mWindowManagerService.saveLastInputMethodWindowForTransition();
                 }
                 mIWindowManager.removeWindowToken(mCurToken);
@@ -1169,16 +1386,17 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
             mCurToken = null;
         }
+
         mCurId = null;
         clearCurMethodLocked();
+
         if (reportToClient && mCurClient != null) {
             executeOrSendMessage(mCurClient.client, mCaller.obtainMessageIO(
                     MSG_UNBIND_METHOD, mCurSeq, mCurClient.client));
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     void requestClientSessionLocked(ClientState cs) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!cs.sessionRequested) {
             if (DEBUG) Slog.v(TAG, "Creating new session for client " + cs);
             InputChannel[] channels = InputChannel.openInputChannelPair(cs.toString());
@@ -1187,17 +1405,15 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     MSG_CREATE_SESSION, mCurMethod, channels[1],
                     new MethodCallback(this, mCurMethod, channels[0])));
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     void clearClientSessionLocked(ClientState cs) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         finishSessionLocked(cs.curSession);
         cs.curSession = null;
         cs.sessionRequested = false;
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void finishSessionLocked(SessionState sessionState) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (sessionState != null) {
             if (sessionState.session != null) {
                 try {
@@ -1213,14 +1429,14 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 sessionState.channel = null;
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     void clearCurMethodLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (mCurMethod != null) {
             for (ClientState cs : mClients.values()) {
                 clearClientSessionLocked(cs);
             }
+
             finishSessionLocked(mEnabledSession);
             mEnabledSession = null;
             mCurMethod = null;
@@ -1228,15 +1444,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         if (mStatusBar != null) {
             mStatusBar.setIconVisibility("ime", false);
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     @Override
     public void onServiceDisconnected(ComponentName name) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         synchronized (mMethodMap) {
-            if (DEBUG) Slog.v(TAG, "Service disconnected: " + name+ " mCurIntent=" + mCurIntent);
-            if (mCurMethod != null && mCurIntent != null&& name.equals(mCurIntent.getComponent())) {
+            if (DEBUG) Slog.v(TAG, "Service disconnected: " + name
+                    + " mCurIntent=" + mCurIntent);
+            if (mCurMethod != null && mCurIntent != null
+                    && name.equals(mCurIntent.getComponent())) {
                 clearCurMethodLocked();
+                // We consider this to be a new bind attempt, since the system
+                // should now try to restart the service for us.
                 mLastBindTime = SystemClock.uptimeMillis();
                 mShowRequested = mInputShown;
                 mInputShown = false;
@@ -1246,11 +1465,10 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     @Override
     public void updateStatusIcon(IBinder token, String packageName, int iconId) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mMethodMap) {
@@ -1258,8 +1476,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     final int uid = Binder.getCallingUid();
                     Slog.e(TAG, "Ignoring updateStatusIcon due to an invalid token. uid:" + uid
                             + " token:" + token);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                            return;
+                    return;
                 }
                 if (iconId == 0) {
                     if (DEBUG) Slog.d(TAG, "hide the small icon for the input method");
@@ -1270,11 +1487,13 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     if (DEBUG) Slog.d(TAG, "show a small icon for the input method");
                     CharSequence contentDescription = null;
                     try {
+                        // Use PackageManager to load label
                         final PackageManager packageManager = mContext.getPackageManager();
                         contentDescription = packageManager.getApplicationLabel(
                                 mIPackageManager.getApplicationInfo(packageName, 0,
                                         mSettings.getCurrentUserId()));
                     } catch (RemoteException e) {
+                        /* ignore */
                     }
                     if (mStatusBar != null) {
                         mStatusBar.setIcon("ime", packageName, iconId, 0,
@@ -1288,36 +1507,16 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             Binder.restoreCallingIdentity(ident);
         }
     }
+
     private boolean needsToShowImeSwitchOngoingNotification() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    if (!mShowOngoingImeSwitcherForPhones)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    return false;
-    }
-        if (mSwitchingDialog != null)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
-    }
-        if (isScreenLocked())
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
-    }
+        if (!mShowOngoingImeSwitcherForPhones) return false;
+        if (mSwitchingDialog != null) return false;
+        if (isScreenLocked()) return false;
         synchronized (mMethodMap) {
             List<InputMethodInfo> imis = mSettings.getEnabledInputMethodListLocked();
             final int N = imis.size();
-            if (N > 2)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return true;
-    }
-            if (N < 1)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return false;
-    }
+            if (N > 2) return true;
+            if (N < 1) return false;
             int nonAuxCount = 0;
             int auxCount = 0;
             InputMethodSubtype nonAuxSubtype = null;
@@ -1343,39 +1542,39 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
             }
             if (nonAuxCount > 1 || auxCount > 1) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return true;
+                return true;
             } else if (nonAuxCount == 1 && auxCount == 1) {
-                if (nonAuxSubtype != null && auxSubtype != null&& (nonAuxSubtype.getLocale().equals(auxSubtype.getLocale())|| auxSubtype.overridesImplicitlyEnabledSubtype()|| nonAuxSubtype.overridesImplicitlyEnabledSubtype())&& nonAuxSubtype.containsExtraValueKey(TAG_TRY_SUPPRESSING_IME_SWITCHER)) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return false;
+                if (nonAuxSubtype != null && auxSubtype != null
+                        && (nonAuxSubtype.getLocale().equals(auxSubtype.getLocale())
+                                || auxSubtype.overridesImplicitlyEnabledSubtype()
+                                || nonAuxSubtype.overridesImplicitlyEnabledSubtype())
+                        && nonAuxSubtype.containsExtraValueKey(TAG_TRY_SUPPRESSING_IME_SWITCHER)) {
+                    return false;
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return false;
         }
     }
+
     private boolean isKeyguardLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    return mKeyguardManager != null && mKeyguardManager.isKeyguardLocked();
+        return mKeyguardManager != null && mKeyguardManager.isKeyguardLocked();
     }
+
+    // Caution! This method is called in this class. Handle multi-user carefully
     @SuppressWarnings("deprecation")
     @Override
     public void setImeWindowStatus(IBinder token, int vis, int backDisposition) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         final long ident = Binder.clearCallingIdentity();
         try {
             if (!calledWithValidToken(token)) {
                 final int uid = Binder.getCallingUid();
                 Slog.e(TAG, "Ignoring setImeWindowStatus due to an invalid token. uid:" + uid
                         + " token:" + token);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return;
+                return;
             }
             synchronized (mMethodMap) {
+                // apply policy for binder calls
                 if (vis != 0 && isKeyguardLocked() && !mCurClientInKeyguard) {
                     vis = 0;
                 }
@@ -1392,15 +1591,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
                 final InputMethodInfo imi = mMethodMap.get(mCurMethodId);
                 if (imi != null && needsToShowImeSwitcher) {
+                    // Used to load label
                     final CharSequence title = mRes.getText(
                             com.android.internal.R.string.select_input_method);
                     final CharSequence summary = InputMethodUtils.getImeAndSubtypeDisplayName(
                             mContext, imi, mCurrentSubtype);
+
                     mImeSwitcherNotification.color = mContext.getResources().getColor(
                             com.android.internal.R.color.system_notification_accent_color);
                     mImeSwitcherNotification.setLatestEventInfo(
                             mContext, title, summary, mImeSwitchPendingIntent);
-                    if ((mNotificationManager != null)&& !mWindowManagerService.hasNavigationBar()) {
+                    if ((mNotificationManager != null)
+                            && !mWindowManagerService.hasNavigationBar()) {
                         if (DEBUG) {
                             Slog.d(TAG, "--- show notification: label =  " + summary);
                         }
@@ -1424,12 +1626,11 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             Binder.restoreCallingIdentity(ident);
         }
     }
+
     @Override
     public void registerSuggestionSpansForNotification(SuggestionSpan[] spans) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
             final InputMethodInfo currentImi = mMethodMap.get(mCurMethodId);
@@ -1441,24 +1642,22 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     @Override
     public boolean notifySuggestionPicked(SuggestionSpan span, String originalString, int index) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         synchronized (mMethodMap) {
             final InputMethodInfo targetImi = mSecureSuggestionSpans.get(span);
+            // TODO: Do not send the intent if the process of the targetImi is already dead.
             if (targetImi != null) {
                 final String[] suggestions = span.getSuggestions();
-                if (index < 0 || index >= suggestions.length)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                return false;
-    }
+                if (index < 0 || index >= suggestions.length) return false;
                 final String className = span.getNotificationTargetClassName();
                 final Intent intent = new Intent();
+                // Ensures that only a class in the original IME package will receive the
+                // notification.
                 intent.setClassName(targetImi.getPackageName(), className);
                 intent.setAction(SuggestionSpan.ACTION_SUGGESTION_PICKED);
                 intent.putExtra(SuggestionSpan.SUGGESTION_SPAN_PICKED_BEFORE, originalString);
@@ -1470,30 +1669,30 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 } finally {
                     Binder.restoreCallingIdentity(ident);
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return false;
     }
+
     void updateFromSettingsLocked(boolean enabledMayChange) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         updateInputMethodsFromSettingsLocked(enabledMayChange);
         updateKeyboardFromSettingsLocked();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     void updateInputMethodsFromSettingsLocked(boolean enabledMayChange) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (enabledMayChange) {
             List<InputMethodInfo> enabled = mSettings.getEnabledInputMethodListLocked();
             for (int i=0; i<enabled.size(); i++) {
+                // We allow the user to select "disabled until used" apps, so if they
+                // are enabling one of those here we now need to make it enabled.
                 InputMethodInfo imm = enabled.get(i);
                 try {
                     ApplicationInfo ai = mIPackageManager.getApplicationInfo(imm.getPackageName(),
                             PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS,
                             mSettings.getCurrentUserId());
-                    if (ai != null && ai.enabledSetting== PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
+                    if (ai != null && ai.enabledSetting
+                            == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
                         if (DEBUG) {
                             Slog.d(TAG, "Update state(" + imm.getId()
                                     + "): DISABLED_UNTIL_USED -> DEFAULT");
@@ -1507,7 +1706,12 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
             }
         }
+        // We are assuming that whoever is changing DEFAULT_INPUT_METHOD and
+        // ENABLED_INPUT_METHODS is taking care of keeping them correctly in
+        // sync, so we will never have a DEFAULT_INPUT_METHOD that is not
+        // enabled.
         String id = mSettings.getSelectedInputMethod();
+        // There is no input method selected, try to choose new applicable input method.
         if (TextUtils.isEmpty(id) && chooseNewDefaultIMELocked()) {
             id = mSettings.getSelectedInputMethod();
         }
@@ -1521,58 +1725,68 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
             mShortcutInputMethodsAndSubtypes.clear();
         } else {
+            // There is no longer an input method set, so stop any current one.
             mCurMethodId = null;
             unbindCurrentMethodLocked(true, false);
         }
+        // Here is not the perfect place to reset the switching controller. Ideally
+        // mSwitchingController and mSettings should be able to share the same state.
+        // TODO: Make sure that mSwitchingController and mSettings are sharing the
+        // the same enabled IMEs list.
         mSwitchingController.resetCircularListLocked(mContext);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
     }
+
     public void updateKeyboardFromSettingsLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         mShowImeWithHardKeyboard = mSettings.isShowImeWithHardKeyboardEnabled();
-        if (mSwitchingDialog != null&& mSwitchingDialogTitleView != null&& mSwitchingDialog.isShowing()) {
+        if (mSwitchingDialog != null
+                && mSwitchingDialogTitleView != null
+                && mSwitchingDialog.isShowing()) {
             final Switch hardKeySwitch = (Switch)mSwitchingDialogTitleView.findViewById(
                     com.android.internal.R.id.hard_keyboard_switch);
             hardKeySwitch.setChecked(mShowImeWithHardKeyboard);
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
-     void setInputMethodLocked(String id, int subtypeId) {
-         Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
+    /* package */ void setInputMethodLocked(String id, int subtypeId) {
         InputMethodInfo info = mMethodMap.get(id);
         if (info == null) {
             throw new IllegalArgumentException("Unknown id: " + id);
         }
+
         if (mCurClient != null && mCurAttribute != null) {
             final int uid = mCurClient.uid;
             final String packageName = mCurAttribute.packageName;
             if (SystemConfig.getInstance().getFixedImeApps().contains(packageName)) {
                 if (InputMethodUtils.checkIfPackageBelongsToUid(mAppOpsManager, uid, packageName)) {
-     Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                return;
+                    return;
                 }
+                // TODO: Do we need to lock the input method when the application reported an
+                // incorrect package name?
                 Slog.e(TAG, "Ignoring FixedImeApps due to the validation failure. uid=" + uid
                         + " package=" + packageName);
             }
         }
+
+        // See if we need to notify a subtype change within the same IME.
         if (id.equals(mCurMethodId)) {
             final int subtypeCount = info.getSubtypeCount();
             if (subtypeCount <= 0) {
-     Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return;
+                return;
             }
             final InputMethodSubtype oldSubtype = mCurrentSubtype;
             final InputMethodSubtype newSubtype;
             if (subtypeId >= 0 && subtypeId < subtypeCount) {
                 newSubtype = info.getSubtypeAt(subtypeId);
             } else {
+                // If subtype is null, try to find the most applicable one from
+                // getCurrentInputMethodSubtype.
                 newSubtype = getCurrentInputMethodSubtypeLocked();
             }
             if (newSubtype == null || oldSubtype == null) {
                 Slog.w(TAG, "Illegal subtype state: old subtype = " + oldSubtype
                         + ", new subtype = " + newSubtype);
-     Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return;
+                return;
             }
             if (newSubtype != oldSubtype) {
                 setSelectedInputMethodAndSubtypeLocked(info, subtypeId, true);
@@ -1585,13 +1799,20 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     }
                 }
             }
-     Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return;
         }
+
+        // Changing to a different IME.
         final long ident = Binder.clearCallingIdentity();
         try {
+            // Set a subtype to this input method.
+            // subtypeId the name of a subtype which will be set.
             setSelectedInputMethodAndSubtypeLocked(info, subtypeId, false);
+            // mCurMethodId should be updated after setSelectedInputMethodAndSubtypeLocked()
+            // because mCurMethodId is stored as a history in
+            // setSelectedInputMethodAndSubtypeLocked().
             mCurMethodId = id;
+
             if (ActivityManagerNative.isSystemReady()) {
                 Intent intent = new Intent(Intent.ACTION_INPUT_METHOD_CHANGED);
                 intent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
@@ -1603,42 +1824,41 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             Binder.restoreCallingIdentity(ident);
         }
     }
+
     @Override
     public boolean showSoftInput(IInputMethodClient client, int flags,
             ResultReceiver resultReceiver) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         int uid = Binder.getCallingUid();
         long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mMethodMap) {
-                if (mCurClient == null || client == null|| mCurClient.client.asBinder() != client.asBinder()) {
+                if (mCurClient == null || client == null
+                        || mCurClient.client.asBinder() != client.asBinder()) {
                     try {
+                        // We need to check if this is the current client with
+                        // focus in the window manager, to allow this call to
+                        // be made before input is started in it.
                         if (!mIWindowManager.inputMethodClientHasFocus(client)) {
                             Slog.w(TAG, "Ignoring showSoftInput of uid " + uid + ": " + client);
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                             return false;
                         }
                     } catch (RemoteException e) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                    return false;
+                        return false;
                     }
                 }
+
                 if (DEBUG) Slog.v(TAG, "Client requesting input be shown");
-            {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return showCurrentInputLocked(flags, resultReceiver);
-            }
             }
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
     }
+
     boolean showCurrentInputLocked(int flags, ResultReceiver resultReceiver) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         mShowRequested = true;
         if ((flags&InputMethodManager.SHOW_IMPLICIT) == 0) {
             mShowExplicitlyRequested = true;
@@ -1647,10 +1867,11 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             mShowExplicitlyRequested = true;
             mShowForced = true;
         }
+
         if (!mSystemReady) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
+
         boolean res = false;
         if (mCurMethod != null) {
             if (DEBUG) Slog.d(TAG, "showCurrentInputLocked: mCurToken=" + mCurToken);
@@ -1665,7 +1886,12 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 mVisibleBound = true;
             }
             res = true;
-        } else if (mHaveConnection && SystemClock.uptimeMillis()>= (mLastBindTime+TIME_TO_RECONNECT)) {
+        } else if (mHaveConnection && SystemClock.uptimeMillis()
+                >= (mLastBindTime+TIME_TO_RECONNECT)) {
+            // The client has asked to have the input method shown, but
+            // we have been sitting here too long with a connection to the
+            // service and no interface received, so let's disconnect/connect
+            // to try to prod things along.
             EventLog.writeEvent(EventLogTags.IMF_FORCE_RECONNECT_IME, mCurMethodId,
                     SystemClock.uptimeMillis()-mLastBindTime,1);
             Slog.w(TAG, "Force disconnect/connect to the IME in showCurrentInputLocked()");
@@ -1678,60 +1904,55 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         + ((mLastBindTime+TIME_TO_RECONNECT) - SystemClock.uptimeMillis()));
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
         return res;
     }
+
     @Override
     public boolean hideSoftInput(IInputMethodClient client, int flags,
             ResultReceiver resultReceiver) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         int uid = Binder.getCallingUid();
         long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mMethodMap) {
-                if (mCurClient == null || client == null|| mCurClient.client.asBinder() != client.asBinder()) {
+                if (mCurClient == null || client == null
+                        || mCurClient.client.asBinder() != client.asBinder()) {
                     try {
+                        // We need to check if this is the current client with
+                        // focus in the window manager, to allow this call to
+                        // be made before input is started in it.
                         if (!mIWindowManager.inputMethodClientHasFocus(client)) {
-                            if (DEBUG) Slog.w(TAG, "Ignoring hideSoftInput of uid "+ uid + ": " + client);
+                            if (DEBUG) Slog.w(TAG, "Ignoring hideSoftInput of uid "
+                                    + uid + ": " + client);
                             setImeWindowVisibilityStatusHiddenLocked();
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                             return false;
                         }
                     } catch (RemoteException e) {
                         setImeWindowVisibilityStatusHiddenLocked();
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                         return false;
                     }
                 }
+
                 if (DEBUG) Slog.v(TAG, "Client requesting input be hidden");
-            {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return hideCurrentInputLocked(flags, resultReceiver);
-            }
             }
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
     }
+
     boolean hideCurrentInputLocked(int flags, ResultReceiver resultReceiver) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        if ((flags&InputMethodManager.HIDE_IMPLICIT_ONLY) != 0&& (mShowExplicitlyRequested || mShowForced)) {
+        if ((flags&InputMethodManager.HIDE_IMPLICIT_ONLY) != 0
+                && (mShowExplicitlyRequested || mShowForced)) {
             if (DEBUG) Slog.v(TAG, "Not hiding: explicit show not cancelled by non-explicit hide");
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return false;
-    }
         }
         if (mShowForced && (flags&InputMethodManager.HIDE_NOT_ALWAYS) != 0) {
             if (DEBUG) Slog.v(TAG, "Not hiding: forced show not cancelled by not-always hide");
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return false;
-    }
         }
         boolean res;
         if (mInputShown && mCurMethod != null) {
@@ -1749,53 +1970,71 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         mShowRequested = false;
         mShowExplicitlyRequested = false;
         mShowForced = false;
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return res;
     }
+
     @Override
     public InputBindResult windowGainedFocus(IInputMethodClient client, IBinder windowToken,
             int controlFlags, int softInputMode, int windowFlags,
             EditorInfo attribute, IInputContext inputContext) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // Needs to check the validity before clearing calling identity
         final boolean calledFromValidUser = calledFromValidUser();
+
         InputBindResult res = null;
         long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mMethodMap) {
-                if (DEBUG) Slog.v(TAG, "windowGainedFocus: " + client.asBinder()+ " controlFlags=#" + Integer.toHexString(controlFlags)+ " softInputMode=#" + Integer.toHexString(softInputMode)+ " windowFlags=#" + Integer.toHexString(windowFlags));
+                if (DEBUG) Slog.v(TAG, "windowGainedFocus: " + client.asBinder()
+                        + " controlFlags=#" + Integer.toHexString(controlFlags)
+                        + " softInputMode=#" + Integer.toHexString(softInputMode)
+                        + " windowFlags=#" + Integer.toHexString(windowFlags));
+
                 ClientState cs = mClients.get(client.asBinder());
                 if (cs == null) {
                     throw new IllegalArgumentException("unknown client "
                             + client.asBinder());
                 }
+
                 try {
                     if (!mIWindowManager.inputMethodClientHasFocus(cs.client)) {
+                        // Check with the window manager to make sure this client actually
+                        // has a window with focus.  If not, reject.  This is thread safe
+                        // because if the focus changes some time before or after, the
+                        // next client receiving focus that has any interest in input will
+                        // be calling through here after that change happens.
                         Slog.w(TAG, "Focus gain on non-focused client " + cs.client
                                 + " (uid=" + cs.uid + " pid=" + cs.pid + ")");
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                                return null;
+                        return null;
                     }
                 } catch (RemoteException e) {
                 }
+
                 if (!calledFromValidUser) {
                     Slog.w(TAG, "A background user is requesting window. Hiding IME.");
                     Slog.w(TAG, "If you want to interect with IME, you need "
                             + "android.permission.INTERACT_ACROSS_USERS_FULL");
                     hideCurrentInputLocked(0, null);
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     return null;
                 }
+
                 if (mCurFocusedWindow == windowToken) {
                     Slog.w(TAG, "Window already focused, ignoring focus gain of: " + client
                             + " attribute=" + attribute + ", token = " + windowToken);
                     if (attribute != null) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                    return startInputUncheckedLocked(cs, inputContext, attribute,controlFlags);
+                        return startInputUncheckedLocked(cs, inputContext, attribute,
+                                controlFlags);
                     }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     return null;
                 }
                 mCurFocusedWindow = windowToken;
+
+                // Should we auto-show the IME even if the caller has not
+                // specified what should be done with it?
+                // We only do this automatically if the window can resize
+                // to accommodate the IME (so what the user sees will give
+                // them good context without input information being obscured
+                // by the IME) or if running on a large screen where there
+                // is more room for the target window + IME.
                 final boolean doAutoShow =
                         (softInputMode & WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST)
                                 == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
@@ -1803,15 +2042,32 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                                 Configuration.SCREENLAYOUT_SIZE_LARGE);
                 final boolean isTextEditor =
                         (controlFlags&InputMethodManager.CONTROL_WINDOW_IS_TEXT_EDITOR) != 0;
+
+                // We want to start input before showing the IME, but after closing
+                // it.  We want to do this after closing it to help the IME disappear
+                // more quickly (not get stuck behind it initializing itself for the
+                // new focused input, even if its window wants to hide the IME).
                 boolean didStart = false;
+                        
                 switch (softInputMode&WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE) {
                     case WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED:
                         if (!isTextEditor || !doAutoShow) {
                             if (WindowManager.LayoutParams.mayUseInputMethod(windowFlags)) {
+                                // There is no focus view, and this window will
+                                // be behind any soft input window, so hide the
+                                // soft input window if it is shown.
                                 if (DEBUG) Slog.v(TAG, "Unspecified window will hide input");
                                 hideCurrentInputLocked(InputMethodManager.HIDE_NOT_ALWAYS, null);
                             }
-                        } else if (isTextEditor && doAutoShow && (softInputMode &WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) != 0) {
+                        } else if (isTextEditor && doAutoShow && (softInputMode &
+                                WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) != 0) {
+                            // There is a focus view, and we are navigating forward
+                            // into the window, so show the input window for the user.
+                            // We only do this automatically if the window can resize
+                            // to accommodate the IME (so what the user sees will give
+                            // them good context without input information being obscured
+                            // by the IME) or if running on a large screen where there
+                            // is more room for the target window + IME.
                             if (DEBUG) Slog.v(TAG, "Unspecified window will show input");
                             if (attribute != null) {
                                 res = startInputUncheckedLocked(cs, inputContext, attribute,
@@ -1822,9 +2078,11 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         }
                         break;
                     case WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED:
+                        // Do nothing.
                         break;
                     case WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN:
-                        if ((softInputMode &WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) != 0) {
+                        if ((softInputMode &
+                                WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) != 0) {
                             if (DEBUG) Slog.v(TAG, "Window asks to hide input going forward");
                             hideCurrentInputLocked(0, null);
                         }
@@ -1834,7 +2092,8 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         hideCurrentInputLocked(0, null);
                         break;
                     case WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE:
-                        if ((softInputMode &WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) != 0) {
+                        if ((softInputMode &
+                                WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) != 0) {
                             if (DEBUG) Slog.v(TAG, "Window asks to show input going forward");
                             if (attribute != null) {
                                 res = startInputUncheckedLocked(cs, inputContext, attribute,
@@ -1854,6 +2113,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         showCurrentInputLocked(InputMethodManager.SHOW_IMPLICIT, null);
                         break;
                 }
+
                 if (!didStart && attribute != null) {
                     res = startInputUncheckedLocked(cs, inputContext, attribute,
                             controlFlags);
@@ -1862,39 +2122,40 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
         return res;
     }
+
     @Override
     public void showInputMethodPickerFromClient(IInputMethodClient client) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
-            if (mCurClient == null || client == null|| mCurClient.client.asBinder() != client.asBinder()) {
+            if (mCurClient == null || client == null
+                    || mCurClient.client.asBinder() != client.asBinder()) {
                 Slog.w(TAG, "Ignoring showInputMethodPickerFromClient of uid "
                         + Binder.getCallingUid() + ": " + client);
             }
+
+            // Always call subtype picker, because subtype picker is a superset of input method
+            // picker.
             mHandler.sendEmptyMessage(MSG_SHOW_IM_SUBTYPE_PICKER);
         }
     }
+
     @Override
     public void setInputMethod(IBinder token, String id) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         setInputMethodWithSubtypeId(token, id, NOT_A_SUBTYPE_ID);
     }
+
     @Override
     public void setInputMethodAndSubtype(IBinder token, String id, InputMethodSubtype subtype) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
             if (subtype != null) {
@@ -1906,28 +2167,27 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     @Override
     public void showInputMethodAndSubtypeEnablerFromClient(
             IInputMethodClient client, String inputMethodId) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
-            if (mCurClient == null || client == null|| mCurClient.client.asBinder() != client.asBinder()) {
+            if (mCurClient == null || client == null
+                || mCurClient.client.asBinder() != client.asBinder()) {
                 Slog.w(TAG, "Ignoring showInputMethodAndSubtypeEnablerFromClient of: " + client);
             }
             executeOrSendMessage(mCurMethod, mCaller.obtainMessageO(
                     MSG_SHOW_IM_SUBTYPE_ENABLER, inputMethodId));
         }
     }
+
     @Override
     public boolean switchToLastInputMethod(IBinder token) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         synchronized (mMethodMap) {
             final Pair<String, String> lastIme = mSettings.getLastInputMethodAndSubtypeLocked();
@@ -1944,12 +2204,19 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 final int lastSubtypeHash = Integer.valueOf(lastIme.second);
                 final int currentSubtypeHash = mCurrentSubtype == null ? NOT_A_SUBTYPE_ID
                         : mCurrentSubtype.hashCode();
+                // If the last IME is the same as the current IME and the last subtype is not
+                // defined, there is no need to switch to the last IME.
                 if (!imiIdIsSame || lastSubtypeHash != currentSubtypeHash) {
                     targetLastImiId = lastIme.first;
                     subtypeId = InputMethodUtils.getSubtypeIdFromHashCode(lastImi, lastSubtypeHash);
                 }
             }
-            if (TextUtils.isEmpty(targetLastImiId)&& !InputMethodUtils.canAddToLastInputMethod(mCurrentSubtype)) {
+
+            if (TextUtils.isEmpty(targetLastImiId)
+                    && !InputMethodUtils.canAddToLastInputMethod(mCurrentSubtype)) {
+                // This is a safety net. If the currentSubtype can't be added to the history
+                // and the framework couldn't find the last ime, we will make the last ime be
+                // the most applicable enabled keyboard subtype of the system imes.
                 final List<InputMethodInfo> enabled = mSettings.getEnabledInputMethodListLocked();
                 if (enabled != null) {
                     final int N = enabled.size();
@@ -1975,133 +2242,106 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     }
                 }
             }
+
             if (!TextUtils.isEmpty(targetLastImiId)) {
                 if (DEBUG) {
                     Slog.d(TAG, "Switch to: " + lastImi.getId() + ", " + lastIme.second
                             + ", from: " + mCurMethodId + ", " + subtypeId);
                 }
                 setInputMethodWithSubtypeIdLocked(token, targetLastImiId, subtypeId);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             } else {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return false;
+                return false;
             }
         }
     }
+
     @Override
     public boolean switchToNextInputMethod(IBinder token, boolean onlyCurrentIme) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         synchronized (mMethodMap) {
             if (!calledWithValidToken(token)) {
                 final int uid = Binder.getCallingUid();
                 Slog.e(TAG, "Ignoring switchToNextInputMethod due to an invalid token. uid:" + uid
                         + " token:" + token);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return false;
+                return false;
             }
             final ImeSubtypeListItem nextSubtype = mSwitchingController.getNextInputMethodLocked(
                     onlyCurrentIme, mMethodMap.get(mCurMethodId), mCurrentSubtype);
             if (nextSubtype == null) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return false;
+                return false;
             }
             setInputMethodWithSubtypeIdLocked(token, nextSubtype.mImi.getId(),
                     nextSubtype.mSubtypeId);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                    return true;
+            return true;
         }
     }
+
     @Override
     public boolean shouldOfferSwitchingToNextInputMethod(IBinder token) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         synchronized (mMethodMap) {
             if (!calledWithValidToken(token)) {
                 final int uid = Binder.getCallingUid();
                 Slog.e(TAG, "Ignoring shouldOfferSwitchingToNextInputMethod due to an invalid "
                         + "token. uid:" + uid + " token:" + token);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return false;
+                return false;
             }
             final ImeSubtypeListItem nextSubtype = mSwitchingController.getNextInputMethodLocked(
-                    false , mMethodMap.get(mCurMethodId), mCurrentSubtype);
+                    false /* onlyCurrentIme */, mMethodMap.get(mCurMethodId), mCurrentSubtype);
             if (nextSubtype == null) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return false;
+                return false;
             }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return true;
         }
     }
+
     @Override
     public InputMethodSubtype getLastInputMethodSubtype() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return null;
+            return null;
         }
         synchronized (mMethodMap) {
             final Pair<String, String> lastIme = mSettings.getLastInputMethodAndSubtypeLocked();
-            if (lastIme == null || TextUtils.isEmpty(lastIme.first)|| TextUtils.isEmpty(lastIme.second))
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return null;
-    }
+            // TODO: Handle the case of the last IME with no subtypes
+            if (lastIme == null || TextUtils.isEmpty(lastIme.first)
+                    || TextUtils.isEmpty(lastIme.second)) return null;
             final InputMethodInfo lastImi = mMethodMap.get(lastIme.first);
-            if (lastImi == null)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return null;
-    }
+            if (lastImi == null) return null;
             try {
                 final int lastSubtypeHash = Integer.valueOf(lastIme.second);
                 final int lastSubtypeId =
                         InputMethodUtils.getSubtypeIdFromHashCode(lastImi, lastSubtypeHash);
                 if (lastSubtypeId < 0 || lastSubtypeId >= lastImi.getSubtypeCount()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                return null;
+                    return null;
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return lastImi.getSubtypeAt(lastSubtypeId);
             } catch (NumberFormatException e) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return null;
+                return null;
             }
         }
     }
+
     @Override
     public void setAdditionalInputMethodSubtypes(String imiId, InputMethodSubtype[] subtypes) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
-        if (TextUtils.isEmpty(imiId) || subtypes == null || subtypes.length == 0)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
-    }
+        // By this IPC call, only a process which shares the same uid with the IME can add
+        // additional input method subtypes to the IME.
+        if (TextUtils.isEmpty(imiId) || subtypes == null || subtypes.length == 0) return;
         synchronized (mMethodMap) {
             final InputMethodInfo imi = mMethodMap.get(imiId);
-            if (imi == null)
-    {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return;
-    }
+            if (imi == null) return;
             final String[] packageInfos;
             try {
                 packageInfos = mIPackageManager.getPackagesForUid(Binder.getCallingUid());
             } catch (RemoteException e) {
                 Slog.e(TAG, "Failed to get package infos");
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             }
             if (packageInfos != null) {
@@ -2112,28 +2352,25 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                         final long ident = Binder.clearCallingIdentity();
                         try {
                             buildInputMethodListLocked(mMethodList, mMethodMap,
-                                    false );
+                                    false /* resetDefaultEnabledIme */);
                         } finally {
                             Binder.restoreCallingIdentity(ident);
                         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                         return;
                     }
                 }
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return;
     }
+
     @Override
     public int getInputMethodWindowVisibleHeight() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    return mWindowManagerService.getInputMethodWindowVisibleHeight();
+        return mWindowManagerService.getInputMethodWindowVisibleHeight();
     }
+
     @Override
     public void notifyUserAction(int sequenceNumber) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (DEBUG) {
             Slog.d(TAG, "Got the notification of a user action. sequenceNumber:" + sequenceNumber);
         }
@@ -2144,7 +2381,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                             + "mismatch. expected:" + mCurUserActionNotificationSequenceNumber
                             + " actual: " + sequenceNumber);
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             }
             final InputMethodInfo imi = mMethodMap.get(mCurMethodId);
@@ -2153,17 +2389,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     private void setInputMethodWithSubtypeId(IBinder token, String id, int subtypeId) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         synchronized (mMethodMap) {
             setInputMethodWithSubtypeIdLocked(token, id, subtypeId);
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void setInputMethodWithSubtypeIdLocked(IBinder token, String id, int subtypeId) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (token == null) {
-            if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS)!= PackageManager.PERMISSION_GRANTED) {
+            if (mContext.checkCallingOrSelfPermission(
+                    android.Manifest.permission.WRITE_SECURE_SETTINGS)
+                    != PackageManager.PERMISSION_GRANTED) {
                 throw new SecurityException(
                         "Using null token requires permission "
                         + android.Manifest.permission.WRITE_SECURE_SETTINGS);
@@ -2171,9 +2408,9 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         } else if (mCurToken != token) {
             Slog.w(TAG, "Ignoring setInputMethod of uid " + Binder.getCallingUid()
                     + " token: " + token);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                    return;
+            return;
         }
+
         final long ident = Binder.clearCallingIdentity();
         try {
             setInputMethodLocked(id, subtypeId);
@@ -2181,20 +2418,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             Binder.restoreCallingIdentity(ident);
         }
     }
+
     @Override
     public void hideMySoftInput(IBinder token, int flags) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
             if (!calledWithValidToken(token)) {
                 final int uid = Binder.getCallingUid();
                 Slog.e(TAG, "Ignoring hideInputMethod due to an invalid token. uid:"
                         + uid + " token:" + token);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return;
+                return;
             }
             long ident = Binder.clearCallingIdentity();
             try {
@@ -2204,20 +2439,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     @Override
     public void showMySoftInput(IBinder token, int flags) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return;
+            return;
         }
         synchronized (mMethodMap) {
             if (!calledWithValidToken(token)) {
                 final int uid = Binder.getCallingUid();
                 Slog.e(TAG, "Ignoring showMySoftInput due to an invalid token. uid:"
                         + uid + " token:" + token);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                        return;
+                return;
             }
             long ident = Binder.clearCallingIdentity();
             try {
@@ -2227,8 +2460,8 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     void setEnabledSessionInMainThread(SessionState session) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (mEnabledSession != session) {
             if (mEnabledSession != null && mEnabledSession.session != null) {
                 try {
@@ -2246,37 +2479,38 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     @Override
     public boolean handleMessage(Message msg) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         SomeArgs args;
         switch (msg.what) {
             case MSG_SHOW_IM_PICKER:
                 showInputMethodMenu();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
+
             case MSG_SHOW_IM_SUBTYPE_PICKER:
                 showInputMethodSubtypeMenu();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
+
             case MSG_SHOW_IM_SUBTYPE_ENABLER:
                 args = (SomeArgs)msg.obj;
                 showInputMethodAndSubtypeEnabler((String)args.arg1);
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
+
             case MSG_SHOW_IM_CONFIG:
                 showConfigureInputMethods();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
+
+            // ---------------------------------------------------------
+
             case MSG_UNBIND_INPUT:
                 try {
                     ((IInputMethod)msg.obj).unbindInput();
                 } catch (RemoteException e) {
+                    // There is nothing interesting about the method dying.
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_BIND_INPUT:
                 args = (SomeArgs)msg.obj;
@@ -2285,27 +2519,26 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 } catch (RemoteException e) {
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_SHOW_SOFT_INPUT:
                 args = (SomeArgs)msg.obj;
                 try {
-                    if (DEBUG) Slog.v(TAG, "Calling " + args.arg1 + ".showSoftInput("+ msg.arg1 + ", " + args.arg2 + ")");
+                    if (DEBUG) Slog.v(TAG, "Calling " + args.arg1 + ".showSoftInput("
+                            + msg.arg1 + ", " + args.arg2 + ")");
                     ((IInputMethod)args.arg1).showSoftInput(msg.arg1, (ResultReceiver)args.arg2);
                 } catch (RemoteException e) {
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_HIDE_SOFT_INPUT:
                 args = (SomeArgs)msg.obj;
                 try {
-                    if (DEBUG) Slog.v(TAG, "Calling " + args.arg1 + ".hideSoftInput(0, "+ args.arg2 + ")");
+                    if (DEBUG) Slog.v(TAG, "Calling " + args.arg1 + ".hideSoftInput(0, "
+                            + args.arg2 + ")");
                     ((IInputMethod)args.arg1).hideSoftInput(0, (ResultReceiver)args.arg2);
                 } catch (RemoteException e) {
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_ATTACH_TOKEN:
                 args = (SomeArgs)msg.obj;
@@ -2315,7 +2548,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 } catch (RemoteException e) {
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_CREATE_SESSION: {
                 args = (SomeArgs)msg.obj;
@@ -2325,14 +2557,17 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     method.createSession(channel, (IInputSessionCallback)args.arg3);
                 } catch (RemoteException e) {
                 } finally {
+                    // Dispose the channel if the input method is not local to this process
+                    // because the remote proxy will get its own copy when unparceled.
                     if (channel != null && Binder.isProxy(method)) {
                         channel.dispose();
                     }
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             }
+            // ---------------------------------------------------------
+
             case MSG_START_INPUT:
                 args = (SomeArgs)msg.obj;
                 try {
@@ -2343,7 +2578,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 } catch (RemoteException e) {
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_RESTART_INPUT:
                 args = (SomeArgs)msg.obj;
@@ -2355,14 +2589,16 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 } catch (RemoteException e) {
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
+
+            // ---------------------------------------------------------
+
             case MSG_UNBIND_METHOD:
                 try {
                     ((IInputMethodClient)msg.obj).onUnbindMethod(msg.arg1);
                 } catch (RemoteException e) {
+                    // There is nothing interesting about the last client dying.
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_BIND_METHOD: {
                 args = (SomeArgs)msg.obj;
@@ -2373,12 +2609,13 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 } catch (RemoteException e) {
                     Slog.w(TAG, "Client died receiving input method " + args.arg2);
                 } finally {
+                    // Dispose the channel if the input method is not local to this process
+                    // because the remote proxy will get its own copy when unparceled.
                     if (res.channel != null && Binder.isProxy(client)) {
                         res.channel.dispose();
                     }
                 }
                 args.recycle();
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             }
             case MSG_SET_ACTIVE:
@@ -2389,7 +2626,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                             + ((ClientState)msg.obj).pid + " uid "
                             + ((ClientState)msg.obj).uid);
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             case MSG_SET_USER_ACTION_NOTIFICATION_SEQUENCE_NUMBER: {
                 final int sequenceNumber = msg.arg1;
@@ -2403,19 +2639,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                             + clientState.pid + " uid "
                             + clientState.uid);
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
             }
+
+            // --------------------------------------------------------------
             case MSG_HARD_KEYBOARD_SWITCH_CHANGED:
                 mHardKeyboardListener.handleHardKeyboardStatusChange(msg.arg1 == 1);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return true;
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return false;
     }
+
     private boolean chooseNewDefaultIMELocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         final InputMethodInfo imi = InputMethodUtils.getMostApplicableDefaultIME(
                 mSettings.getEnabledInputMethodListLocked());
         if (imi != null) {
@@ -2423,55 +2658,64 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 Slog.d(TAG, "New default IME was selected: " + imi.getId());
             }
             resetSelectedInputMethodAndSubtypeLocked(imi.getId());
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return true;
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
         return false;
     }
+
     void buildInputMethodListLocked(ArrayList<InputMethodInfo> list,
             HashMap<String, InputMethodInfo> map, boolean resetDefaultEnabledIme) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (DEBUG) {
             Slog.d(TAG, "--- re-buildInputMethodList reset = " + resetDefaultEnabledIme
                     + " \n ------ \n" + InputMethodUtils.getStackTrace());
         }
         list.clear();
         map.clear();
+
+        // Use for queryIntentServicesAsUser
         final PackageManager pm = mContext.getPackageManager();
         String disabledSysImes = mSettings.getDisabledSystemInputMethods();
         if (disabledSysImes == null) disabledSysImes = "";
+
         final List<ResolveInfo> services = pm.queryIntentServicesAsUser(
                 new Intent(InputMethod.SERVICE_INTERFACE),
                 PackageManager.GET_META_DATA | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS,
                 mSettings.getCurrentUserId());
+
         final HashMap<String, List<InputMethodSubtype>> additionalSubtypes =
                 mFileManager.getAllAdditionalInputMethodSubtypes();
         for (int i = 0; i < services.size(); ++i) {
             ResolveInfo ri = services.get(i);
             ServiceInfo si = ri.serviceInfo;
             ComponentName compName = new ComponentName(si.packageName, si.name);
-            if (!android.Manifest.permission.BIND_INPUT_METHOD.equals(si.permission)) {
+            if (!android.Manifest.permission.BIND_INPUT_METHOD.equals(
+                    si.permission)) {
                 Slog.w(TAG, "Skipping input method " + compName
                         + ": it does not require the permission "
                         + android.Manifest.permission.BIND_INPUT_METHOD);
                 continue;
             }
+
             if (DEBUG) Slog.d(TAG, "Checking " + compName);
+
             try {
                 InputMethodInfo p = new InputMethodInfo(mContext, ri, additionalSubtypes);
                 list.add(p);
                 final String id = p.getId();
                 map.put(id, p);
+
                 if (DEBUG) {
                     Slog.d(TAG, "Found an input method " + p);
                 }
+
             } catch (XmlPullParserException e) {
                 Slog.w(TAG, "Unable to load input method " + compName, e);
             } catch (IOException e) {
                 Slog.w(TAG, "Unable to load input method " + compName, e);
             }
         }
+
         if (resetDefaultEnabledIme) {
             final ArrayList<InputMethodInfo> defaultEnabledIme =
                     InputMethodUtils.getDefaultEnabledImes(mContext, mSystemReady, list);
@@ -2483,6 +2727,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 setInputMethodEnabledLocked(imi.getId(), true);
             }
         }
+
         final String defaultImiId = mSettings.getSelectedInputMethod();
         if (!TextUtils.isEmpty(defaultImiId)) {
             if (!map.containsKey(defaultImiId)) {
@@ -2491,24 +2736,28 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     updateInputMethodsFromSettingsLocked(true);
                 }
             } else {
+                // Double check that the default IME is certainly enabled.
                 setInputMethodEnabledLocked(defaultImiId, true);
             }
         }
+        // Here is not the perfect place to reset the switching controller. Ideally
+        // mSwitchingController and mSettings should be able to share the same state.
+        // TODO: Make sure that mSwitchingController and mSettings are sharing the
+        // the same enabled IMEs list.
         mSwitchingController.resetCircularListLocked(mContext);
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
+    // ----------------------------------------------------------------------
+
     private void showInputMethodMenu() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         showInputMethodMenuInternal(false);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void showInputMethodSubtypeMenu() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         showInputMethodMenuInternal(true);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void showInputMethodAndSubtypeEnabler(String inputMethodId) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         Intent intent = new Intent(Settings.ACTION_INPUT_METHOD_SUBTYPE_SETTINGS);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
@@ -2517,42 +2766,45 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             intent.putExtra(Settings.EXTRA_INPUT_METHOD_ID, inputMethodId);
         }
         mContext.startActivityAsUser(intent, null, UserHandle.CURRENT);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void showConfigureInputMethods() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         Intent intent = new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mContext.startActivityAsUser(intent, null, UserHandle.CURRENT);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private boolean isScreenLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-    return mKeyguardManager != null&& mKeyguardManager.isKeyguardLocked() && mKeyguardManager.isKeyguardSecure();
+        return mKeyguardManager != null
+                && mKeyguardManager.isKeyguardLocked() && mKeyguardManager.isKeyguardSecure();
     }
+
     private void showInputMethodMenuInternal(boolean showSubtypes) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (DEBUG) Slog.v(TAG, "Show switching menu");
+
         final Context context = mContext;
         final boolean isScreenLocked = isScreenLocked();
+
         final String lastInputMethodId = mSettings.getSelectedInputMethod();
         int lastInputMethodSubtypeId = mSettings.getSelectedInputMethodSubtypeId(lastInputMethodId);
         if (DEBUG) Slog.v(TAG, "Current IME: " + lastInputMethodId);
+
         synchronized (mMethodMap) {
             final HashMap<InputMethodInfo, List<InputMethodSubtype>> immis =
                     mSettings.getExplicitlyOrImplicitlyEnabledInputMethodsAndSubtypeListLocked(
                             mContext);
             if (immis == null || immis.size() == 0) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return;
+                return;
             }
+
             hideInputMethodMenuLocked();
+
             final List<ImeSubtypeListItem> imList =
                     mSwitchingController.getSortedInputMethodAndSubtypeListLocked(
                             showSubtypes, mInputShown, isScreenLocked);
+
             if (lastInputMethodSubtypeId == NOT_A_SUBTYPE_ID) {
                 final InputMethodSubtype currentSubtype = getCurrentInputMethodSubtypeLocked();
                 if (currentSubtype != null) {
@@ -2561,6 +2813,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                             currentImi, currentSubtype.hashCode());
                 }
             }
+
             final int N = imList.size();
             mIms = new InputMethodInfo[N];
             mSubtypeIds = new int[N];
@@ -2571,22 +2824,25 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 mSubtypeIds[i] = item.mSubtypeId;
                 if (mIms[i].getId().equals(lastInputMethodId)) {
                     int subtypeId = mSubtypeIds[i];
-                    if ((subtypeId == NOT_A_SUBTYPE_ID)|| (lastInputMethodSubtypeId == NOT_A_SUBTYPE_ID && subtypeId == 0)|| (subtypeId == lastInputMethodSubtypeId)) {
+                    if ((subtypeId == NOT_A_SUBTYPE_ID)
+                            || (lastInputMethodSubtypeId == NOT_A_SUBTYPE_ID && subtypeId == 0)
+                            || (subtypeId == lastInputMethodSubtypeId)) {
                         checkedItem = i;
                     }
                 }
             }
+
             final Context settingsContext = new ContextThemeWrapper(context,
                     com.android.internal.R.style.Theme_DeviceDefault_Settings);
+
             mDialogBuilder = new AlertDialog.Builder(settingsContext);
             mDialogBuilder.setOnCancelListener(new OnCancelListener() {
                 @Override
                 public void onCancel(DialogInterface dialog) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     hideInputMethodMenu();
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 }
             });
+
             final Context dialogContext = mDialogBuilder.getContext();
             final TypedArray a = dialogContext.obtainStyledAttributes(null,
                     com.android.internal.R.styleable.DialogPreference,
@@ -2594,12 +2850,16 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             final Drawable dialogIcon = a.getDrawable(
                     com.android.internal.R.styleable.DialogPreference_dialogIcon);
             a.recycle();
+
             mDialogBuilder.setIcon(dialogIcon);
+
             final LayoutInflater inflater = (LayoutInflater) dialogContext.getSystemService(
                     Context.LAYOUT_INFLATER_SERVICE);
             final View tv = inflater.inflate(
                     com.android.internal.R.layout.input_method_switch_dialog_title, null);
             mDialogBuilder.setCustomTitle(tv);
+
+            // Setup layout for a toggle switch of the hardware keyboard
             mSwitchingDialogTitleView = tv;
             mSwitchingDialogTitleView
                     .findViewById(com.android.internal.R.id.hard_keyboard_section)
@@ -2611,22 +2871,22 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             hardKeySwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     mSettings.setShowImeWithHardKeyboard(isChecked);
+                    // Ensure that the input method dialog is dismissed when changing
+                    // the hardware keyboard state.
                     hideInputMethodMenu();
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 }
             });
+
             final ImeSubtypeListAdapter adapter = new ImeSubtypeListAdapter(dialogContext,
                     com.android.internal.R.layout.input_method_switch_item, imList, checkedItem);
             final OnClickListener choiceListener = new OnClickListener() {
                 @Override
                 public void onClick(final DialogInterface dialog, final int which) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     synchronized (mMethodMap) {
-                        if (mIms == null || mIms.length <= which || mSubtypeIds == null|| mSubtypeIds.length <= which) {
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                                return;
+                        if (mIms == null || mIms.length <= which || mSubtypeIds == null
+                                || mSubtypeIds.length <= which) {
+                            return;
                         }
                         final InputMethodInfo im = mIms[which];
                         int subtypeId = mSubtypeIds[which];
@@ -2643,13 +2903,12 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
             };
             mDialogBuilder.setSingleChoiceItems(adapter, checkedItem, choiceListener);
+
             if (showSubtypes && !isScreenLocked) {
                 final OnClickListener positiveListener = new OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                         showConfigureInputMethods();
-                    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     }
                 };
                 mDialogBuilder.setPositiveButton(
@@ -2666,6 +2925,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             mSwitchingDialog.show();
         }
     }
+
     private static class ImeSubtypeListAdapter extends ArrayAdapter<ImeSubtypeListItem> {
         private final LayoutInflater mInflater;
         private final int mTextViewResourceId;
@@ -2674,23 +2934,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         public ImeSubtypeListAdapter(Context context, int textViewResourceId,
                 List<ImeSubtypeListItem> itemsList, int checkedItem) {
             super(context, textViewResourceId, itemsList);
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+
             mTextViewResourceId = textViewResourceId;
             mItemsList = itemsList;
             mCheckedItem = checkedItem;
             mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             final View view = convertView != null ? convertView
                     : mInflater.inflate(mTextViewResourceId, null);
-                    if (position < 0 || position >= mItemsList.size())
-        {
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                    return view;
-        }
+            if (position < 0 || position >= mItemsList.size()) return view;
             final ImeSubtypeListItem item = mItemsList.get(position);
             final CharSequence imeName = item.mImeName;
             final CharSequence subtypeName = item.mSubtypeName;
@@ -2707,100 +2962,115 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             final RadioButton radioButton =
                     (RadioButton)view.findViewById(com.android.internal.R.id.radio);
             radioButton.setChecked(position == mCheckedItem);
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return view;
         }
     }
+
     void hideInputMethodMenu() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         synchronized (mMethodMap) {
             hideInputMethodMenuLocked();
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     void hideInputMethodMenuLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (DEBUG) Slog.v(TAG, "Hide switching menu");
+
         if (mSwitchingDialog != null) {
             mSwitchingDialog.dismiss();
             mSwitchingDialog = null;
         }
+
         updateImeWindowStatusLocked();
         mDialogBuilder = null;
         mIms = null;
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
+    // ----------------------------------------------------------------------
+
     @Override
     public boolean setInputMethodEnabled(String id, boolean enabled) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // TODO: Make this work even for non-current users?
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         synchronized (mMethodMap) {
-            if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.WRITE_SECURE_SETTINGS)!= PackageManager.PERMISSION_GRANTED) {
+            if (mContext.checkCallingOrSelfPermission(
+                    android.Manifest.permission.WRITE_SECURE_SETTINGS)
+                    != PackageManager.PERMISSION_GRANTED) {
                 throw new SecurityException(
                         "Requires permission "
                         + android.Manifest.permission.WRITE_SECURE_SETTINGS);
             }
+            
             long ident = Binder.clearCallingIdentity();
             try {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return setInputMethodEnabledLocked(id, enabled);
+                return setInputMethodEnabledLocked(id, enabled);
             } finally {
                 Binder.restoreCallingIdentity(ident);
             }
         }
     }
+
     boolean setInputMethodEnabledLocked(String id, boolean enabled) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // Make sure this is a valid input method.
         InputMethodInfo imm = mMethodMap.get(id);
         if (imm == null) {
             throw new IllegalArgumentException("Unknown id: " + mCurMethodId);
         }
+
         List<Pair<String, ArrayList<String>>> enabledInputMethodsList = mSettings
                 .getEnabledInputMethodsAndSubtypeListLocked();
+
         if (enabled) {
             for (Pair<String, ArrayList<String>> pair: enabledInputMethodsList) {
                 if (pair.first.equals(id)) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                return true;
+                    // We are enabling this input method, but it is already enabled.
+                    // Nothing to do. The previous state was enabled.
+                    return true;
                 }
             }
             mSettings.appendAndPutEnabledInputMethodLocked(id, false);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+            // Previous state was disabled.
             return false;
         } else {
             StringBuilder builder = new StringBuilder();
-            if (mSettings.buildAndPutEnabledInputMethodsStrRemovingIdLocked(builder, enabledInputMethodsList, id)) {
+            if (mSettings.buildAndPutEnabledInputMethodsStrRemovingIdLocked(
+                    builder, enabledInputMethodsList, id)) {
+                // Disabled input method is currently selected, switch to another one.
                 final String selId = mSettings.getSelectedInputMethod();
                 if (id.equals(selId) && !chooseNewDefaultIMELocked()) {
                     Slog.i(TAG, "Can't find new IME, unsetting the current input method.");
                     resetSelectedInputMethodAndSubtypeLocked("");
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+                // Previous state was enabled.
                 return true;
             } else {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return false;
+                // We are disabling the input method but it is already disabled.
+                // Nothing to do.  The previous state was disabled.
+                return false;
             }
         }
     }
+
     private void setSelectedInputMethodAndSubtypeLocked(InputMethodInfo imi, int subtypeId,
             boolean setSubtypeOnly) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // Update the history of InputMethod and Subtype
         mSettings.saveCurrentInputMethodAndSubtypeToHistory(mCurMethodId, mCurrentSubtype);
+
         mCurUserActionNotificationSequenceNumber =
                 Math.max(mCurUserActionNotificationSequenceNumber + 1, 1);
         if (DEBUG) {
             Slog.d(TAG, "Bump mCurUserActionNotificationSequenceNumber:"
                     + mCurUserActionNotificationSequenceNumber);
         }
+
         if (mCurClient != null && mCurClient.client != null) {
             executeOrSendMessage(mCurClient.client, mCaller.obtainMessageIO(
                     MSG_SET_USER_ACTION_NOTIFICATION_SEQUENCE_NUMBER,
                     mCurUserActionNotificationSequenceNumber, mCurClient));
         }
+
+        // Set Subtype here
         if (imi == null || subtypeId < 0) {
             mSettings.putSelectedSubtype(NOT_A_SUBTYPE_ID);
             mCurrentSubtype = null;
@@ -2811,18 +3081,30 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 mCurrentSubtype = subtype;
             } else {
                 mSettings.putSelectedSubtype(NOT_A_SUBTYPE_ID);
+                // If the subtype is not specified, choose the most applicable one
                 mCurrentSubtype = getCurrentInputMethodSubtypeLocked();
             }
         }
+
+        // Workaround.
+        // ASEC is not ready in the IMMS constructor. Accordingly, forward-locked
+        // IMEs are not recognized and considered uninstalled.
+        // Actually, we can't move everything after SystemReady because
+        // IMMS needs to run in the encryption lock screen. So, we just skip changing
+        // the default IME here and try cheking the default IME again in systemReady().
+        // TODO: Do nothing before system ready and implement a separated logic for
+        // the encryption lock screen.
+        // TODO: ASEC should be ready before IMMS is instantiated.
         if (mSystemReady && !setSubtypeOnly) {
+            // Set InputMethod here
             mSettings.putSelectedInputMethod(imi != null ? imi.getId() : "");
         }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
     private void resetSelectedInputMethodAndSubtypeLocked(String newDefaultIme) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         InputMethodInfo imi = mMethodMap.get(newDefaultIme);
         int lastSubtypeId = NOT_A_SUBTYPE_ID;
+        // newDefaultIme is empty when there is no candidate for the selected IME.
         if (imi != null && !TextUtils.isEmpty(newDefaultIme)) {
             String subtypeHashCode = mSettings.getLastSubtypeForInputMethodLocked(newDefaultIme);
             if (subtypeHashCode != null) {
@@ -2835,15 +3117,17 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
         setSelectedInputMethodAndSubtypeLocked(imi, lastSubtypeId, false);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
+    // If there are no selected shortcuts, tries finding the most applicable ones.
     private Pair<InputMethodInfo, InputMethodSubtype>
             findLastResortApplicableShortcutInputMethodAndSubtypeLocked(String mode) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         List<InputMethodInfo> imis = mSettings.getEnabledInputMethodListLocked();
         InputMethodInfo mostApplicableIMI = null;
         InputMethodSubtype mostApplicableSubtype = null;
         boolean foundInSystemIME = false;
+
+        // Search applicable subtype for each InputMethodInfo
         for (InputMethodInfo imi: imis) {
             final String imiId = imi.getId();
             if (foundInSystemIME && !imiId.equals(mCurMethodId)) {
@@ -2852,10 +3136,13 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             InputMethodSubtype subtype = null;
             final List<InputMethodSubtype> enabledSubtypes =
                     mSettings.getEnabledInputMethodSubtypeListLocked(mContext, imi, true);
+            // 1. Search by the current subtype's locale from enabledSubtypes.
             if (mCurrentSubtype != null) {
                 subtype = InputMethodUtils.findLastResortApplicableSubtypeLocked(
                         mRes, enabledSubtypes, mode, mCurrentSubtype.getLocale(), false);
             }
+            // 2. Search by the system locale from enabledSubtypes.
+            // 3. Search the first enabled subtype matched with mode from enabledSubtypes.
             if (subtype == null) {
                 subtype = InputMethodUtils.findLastResortApplicableSubtypeLocked(
                         mRes, enabledSubtypes, mode, null, true);
@@ -2866,23 +3153,29 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     overridingImplicitlyEnabledSubtypes.isEmpty()
                             ? InputMethodUtils.getSubtypes(imi)
                             : overridingImplicitlyEnabledSubtypes;
+            // 4. Search by the current subtype's locale from all subtypes.
             if (subtype == null && mCurrentSubtype != null) {
                 subtype = InputMethodUtils.findLastResortApplicableSubtypeLocked(
                         mRes, subtypesForSearch, mode, mCurrentSubtype.getLocale(), false);
             }
+            // 5. Search by the system locale from all subtypes.
+            // 6. Search the first enabled subtype matched with mode from all subtypes.
             if (subtype == null) {
                 subtype = InputMethodUtils.findLastResortApplicableSubtypeLocked(
                         mRes, subtypesForSearch, mode, null, true);
             }
             if (subtype != null) {
                 if (imiId.equals(mCurMethodId)) {
+                    // The current input method is the most applicable IME.
                     mostApplicableIMI = imi;
                     mostApplicableSubtype = subtype;
                     break;
                 } else if (!foundInSystemIME) {
+                    // The system input method is 2nd applicable IME.
                     mostApplicableIMI = imi;
                     mostApplicableSubtype = subtype;
-                    if ((imi.getServiceInfo().applicationInfo.flags& ApplicationInfo.FLAG_SYSTEM) != 0) {
+                    if ((imi.getServiceInfo().applicationInfo.flags
+                            & ApplicationInfo.FLAG_SYSTEM) != 0) {
                         foundInSystemIME = true;
                     }
                 }
@@ -2900,42 +3193,47 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
         if (mostApplicableIMI != null) {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return new Pair<InputMethodInfo, InputMethodSubtype> (mostApplicableIMI,mostApplicableSubtype);
+            return new Pair<InputMethodInfo, InputMethodSubtype> (mostApplicableIMI,
+                    mostApplicableSubtype);
         } else {
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return null;
+            return null;
         }
     }
+
+    /**
+     * @return Return the current subtype of this input method.
+     */
     @Override
     public InputMethodSubtype getCurrentInputMethodSubtype() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // TODO: Make this work even for non-current users?
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return null;
+            return null;
         }
         synchronized (mMethodMap) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return getCurrentInputMethodSubtypeLocked();
+            return getCurrentInputMethodSubtypeLocked();
         }
     }
+
     private InputMethodSubtype getCurrentInputMethodSubtypeLocked() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (mCurMethodId == null) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return null;
+            return null;
         }
         final boolean subtypeIsSelected = mSettings.isSubtypeSelected();
         final InputMethodInfo imi = mMethodMap.get(mCurMethodId);
         if (imi == null || imi.getSubtypeCount() == 0) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return null;
+            return null;
         }
-        if (!subtypeIsSelected || mCurrentSubtype == null|| !InputMethodUtils.isValidSubtypeId(imi, mCurrentSubtype.hashCode())) {
+        if (!subtypeIsSelected || mCurrentSubtype == null
+                || !InputMethodUtils.isValidSubtypeId(imi, mCurrentSubtype.hashCode())) {
             int subtypeId = mSettings.getSelectedInputMethodSubtypeId(mCurMethodId);
             if (subtypeId == NOT_A_SUBTYPE_ID) {
+                // If there are no selected subtypes, the framework will try to find
+                // the most applicable subtype from explicitly or implicitly enabled
+                // subtypes.
                 List<InputMethodSubtype> explicitlyOrImplicitlyEnabledSubtypes =
                         mSettings.getEnabledInputMethodSubtypeListLocked(mContext, imi, true);
+                // If there is only one explicitly or implicitly enabled subtype,
+                // just returns it.
                 if (explicitlyOrImplicitlyEnabledSubtypes.size() == 1) {
                     mCurrentSubtype = explicitlyOrImplicitlyEnabledSubtypes.get(0);
                 } else if (explicitlyOrImplicitlyEnabledSubtypes.size() > 1) {
@@ -2952,12 +3250,11 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 mCurrentSubtype = InputMethodUtils.getSubtypes(imi).get(subtypeId);
             }
         }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         return mCurrentSubtype;
     }
+
     private void addShortcutInputMethodAndSubtypes(InputMethodInfo imi,
             InputMethodSubtype subtype) {
-                Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         if (mShortcutInputMethodsAndSubtypes.containsKey(imi)) {
             mShortcutInputMethodsAndSubtypes.get(imi).add(subtype);
         } else {
@@ -2965,15 +3262,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             subtypes.add(subtype);
             mShortcutInputMethodsAndSubtypes.put(imi, subtypes);
         }
-            Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
     }
+
+    // TODO: We should change the return type from List to List<Parcelable>
     @SuppressWarnings("rawtypes")
     @Override
     public List getShortcutInputMethodsAndSubtypes() {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         synchronized (mMethodMap) {
             ArrayList<Object> ret = new ArrayList<Object>();
             if (mShortcutInputMethodsAndSubtypes.size() == 0) {
+                // If there are no selected shortcut subtypes, the framework will try to find
+                // the most applicable subtype from all subtypes whose mode is
+                // SUBTYPE_MODE_VOICE. This is an exceptional case, so we will hardcode the mode.
                 Pair<InputMethodInfo, InputMethodSubtype> info =
                     findLastResortApplicableShortcutInputMethodAndSubtypeLocked(
                             InputMethodUtils.SUBTYPE_MODE_VOICE);
@@ -2981,7 +3281,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     ret.add(info.first);
                     ret.add(info.second);
                 }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return ret;
             }
             for (InputMethodInfo imi: mShortcutInputMethodsAndSubtypes.keySet()) {
@@ -2990,16 +3289,15 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     ret.add(subtype);
                 }
             }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return ret;
         }
     }
+
     @Override
     public boolean setCurrentInputMethodSubtype(InputMethodSubtype subtype) {
-        Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+        // TODO: Make this work even for non-current users?
         if (!calledFromValidUser()) {
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        return false;
+            return false;
         }
         synchronized (mMethodMap) {
             if (subtype != null && mCurMethodId != null) {
@@ -3007,14 +3305,14 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 int subtypeId = InputMethodUtils.getSubtypeIdFromHashCode(imi, subtype.hashCode());
                 if (subtypeId != NOT_A_SUBTYPE_ID) {
                     setInputMethodLocked(mCurMethodId, subtypeId);
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                     return true;
                 }
             }
-    Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             return false;
         }
     }
+
+    // TODO: Cache the state for each user and reset when the cached user is removed.
     private static class InputMethodFileManager {
         private static final String SYSTEM_PATH = "system";
         private static final String INPUT_METHOD_PATH = "inputmethod";
@@ -3034,7 +3332,6 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
         private final HashMap<String, List<InputMethodSubtype>> mAdditionalSubtypesMap =
                 new HashMap<String, List<InputMethodSubtype>>();
         public InputMethodFileManager(HashMap<String, InputMethodInfo> methodMap, int userId) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             if (methodMap == null) {
                 throw new NullPointerException("methodMap is null");
             }
@@ -3049,26 +3346,25 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             final File subtypeFile = new File(inputMethodDir, ADDITIONAL_SUBTYPES_FILE_NAME);
             mAdditionalInputMethodSubtypeFile = new AtomicFile(subtypeFile);
             if (!subtypeFile.exists()) {
+                // If "subtypes.xml" doesn't exist, create a blank file.
                 writeAdditionalInputMethodSubtypes(
                         mAdditionalSubtypesMap, mAdditionalInputMethodSubtypeFile, methodMap);
             } else {
                 readAdditionalInputMethodSubtypes(
                         mAdditionalSubtypesMap, mAdditionalInputMethodSubtypeFile);
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         private void deleteAllInputMethodSubtypes(String imiId) {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             synchronized (mMethodMap) {
                 mAdditionalSubtypesMap.remove(imiId);
                 writeAdditionalInputMethodSubtypes(
                         mAdditionalSubtypesMap, mAdditionalInputMethodSubtypeFile, mMethodMap);
             }
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         public void addInputMethodSubtypes(
                 InputMethodInfo imi, InputMethodSubtype[] additionalSubtypes) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             synchronized (mMethodMap) {
                 final ArrayList<InputMethodSubtype> subtypes = new ArrayList<InputMethodSubtype>();
                 final int N = additionalSubtypes.length;
@@ -3085,19 +3381,18 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 writeAdditionalInputMethodSubtypes(
                         mAdditionalSubtypesMap, mAdditionalInputMethodSubtypeFile, mMethodMap);
             }
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         public HashMap<String, List<InputMethodSubtype>> getAllAdditionalInputMethodSubtypes() {
-            Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
             synchronized (mMethodMap) {
-        Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-            return mAdditionalSubtypesMap;
+                return mAdditionalSubtypesMap;
             }
         }
+
         private static void writeAdditionalInputMethodSubtypes(
                 HashMap<String, List<InputMethodSubtype>> allSubtypes, AtomicFile subtypesFile,
                 HashMap<String, InputMethodInfo> methodMap) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
+            // Safety net for the case that this function is called before methodMap is set.
             final boolean isSetMethodMap = methodMap != null && methodMap.size() > 0;
             FileOutputStream fos = null;
             try {
@@ -3139,16 +3434,11 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                     subtypesFile.failWrite(fos);
                 }
             }
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
         }
+
         private static void readAdditionalInputMethodSubtypes(
                 HashMap<String, List<InputMethodSubtype>> allSubtypes, AtomicFile subtypesFile) {
-                    Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                if (allSubtypes == null || subtypesFile == null)
-                {
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                return;
-                }
+            if (allSubtypes == null || subtypesFile == null) return;
             allSubtypes.clear();
             FileInputStream fis = null;
             try {
@@ -3156,7 +3446,9 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 final XmlPullParser parser = Xml.newPullParser();
                 parser.setInput(fis, null);
                 int type = parser.getEventType();
-                while ((type = parser.next()) != XmlPullParser.START_TAG&& type != XmlPullParser.END_DOCUMENT) {}
+                // Skip parsing until START_TAG
+                while ((type = parser.next()) != XmlPullParser.START_TAG
+                        && type != XmlPullParser.END_DOCUMENT) {}
                 String firstNodeName = parser.getName();
                 if (!NODE_SUBTYPES.equals(firstNodeName)) {
                     throw new XmlPullParserException("Xml doesn't start with subtypes");
@@ -3164,7 +3456,8 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 final int depth =parser.getDepth();
                 String currentImiId = null;
                 ArrayList<InputMethodSubtype> tempSubtypesArray = null;
-                while (((type = parser.next()) != XmlPullParser.END_TAG|| parser.getDepth() > depth) && type != XmlPullParser.END_DOCUMENT) {
+                while (((type = parser.next()) != XmlPullParser.END_TAG
+                        || parser.getDepth() > depth) && type != XmlPullParser.END_DOCUMENT) {
                     if (type != XmlPullParser.START_TAG)
                         continue;
                     final String nodeName = parser.getName();
@@ -3206,15 +3499,12 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
                 }
             } catch (XmlPullParserException e) {
                 Slog.w(TAG, "Error reading subtypes: " + e);
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             } catch (java.io.IOException e) {
                 Slog.w(TAG, "Error reading subtypes: " + e);
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             } catch (NumberFormatException e) {
                 Slog.w(TAG, "Error reading subtypes: " + e);
-                Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
                 return;
             } finally {
                 if (fis != null) {
@@ -3227,19 +3517,24 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             }
         }
     }
+
     @Override
-protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-     Slog.w(TAG,"entry: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-        if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DUMP)!= PackageManager.PERMISSION_GRANTED) {
+    protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) 
+	{
+        if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DUMP)
+                != PackageManager.PERMISSION_GRANTED) {
+
             pw.println("Permission Denial: can't dump InputMethodManager from from pid="
                     + Binder.getCallingPid()
                     + ", uid=" + Binder.getCallingUid());
- Slog.w(TAG,"exit: " + Thread.currentThread().getStackTrace()[2].getMethodName()+"() "+Thread.currentThread().getStackTrace()[2].getClassName()+":"+Thread.currentThread().getStackTrace()[2].getLineNumber() );
-                    return;
+            return;
         }
+
         IInputMethod method;
         ClientState client;
+
         final Printer p = new PrintWriterPrinter(pw);
+
         synchronized (mMethodMap) {
             p.println("Current Input Method Manager state:");
             int N = mMethodList.size();
@@ -3276,6 +3571,7 @@ protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
                     + mCurUserActionNotificationSequenceNumber);
             p.println("  mSystemReady=" + mSystemReady + " mInteractive=" + mScreenOn);
         }
+
         p.println(" ");
         if (client != null) {
             pw.flush();
@@ -3287,6 +3583,7 @@ protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         } else {
             p.println("No input method client.");
         }
+
         p.println(" ");
         if (method != null) {
             pw.flush();
