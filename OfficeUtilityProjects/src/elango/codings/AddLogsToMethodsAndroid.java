@@ -3,9 +3,11 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 
+import javax.sound.sampled.Line;
+
 public class AddLogsToMethodsAndroid {
 	
-	private static boolean testLocalFiles = true;
+	private static boolean testLocalFiles = false;
 	private static boolean enableLogs = false;
 	
 	public static int firstFuncLineNum = 0;
@@ -185,9 +187,19 @@ public class AddLogsToMethodsAndroid {
 				+ "Thread.currentThread().getStackTrace()[2].getLineNumber() );";
 	}
 	
-	public static int countOccurances(String str, String key)
+	public static int countOccurances(String str, String keyStr)
 	{ 
-		int lastIndex = 0;
+		return countOccurances(str, keyStr, 0);
+	}
+	
+	public static int countOccurances(String str, String key, int fromIndex)
+	{ 
+		if(fromIndex >= str.length())
+		{
+			return 0;
+		}
+		
+		int lastIndex = fromIndex;
 		int count = 0;
 		
 		while (lastIndex != -1) {
@@ -202,6 +214,81 @@ public class AddLogsToMethodsAndroid {
 		    
 		}
 		return count;
+	}
+	
+	public static int countOccurancesOutsideLiteral(String str, String keyStr)
+	{ 
+		return countOccurancesOutsideLiteral(str, keyStr, 0);
+	}
+	
+	public static int countOccurancesOutsideLiteral(String str, String keyStr, int fromIndex)
+	{ 
+		int lastIndex = fromIndex;
+		int count = 0;
+		
+		while (lastIndex != -1) {
+			
+			lastIndex = indexOutsideStringLiteral(str, keyStr, lastIndex);
+		    
+		    if (lastIndex != -1) {
+		    	
+		        count++;
+		        lastIndex += keyStr.length();
+		    }
+		    
+		}
+		return count;
+	}
+	
+	public static int indexOutsideStringLiteral(String line, String keyStr)
+	{
+		return indexOutsideStringLiteral(line, keyStr, 0);
+	}
+	
+	public static int indexOutsideStringLiteral(String line, String keyStr, int fromIndex)
+	{
+		if(fromIndex >= line.length())
+			return -1;
+		
+		int quotationCount = countOccurances(line, "\"", fromIndex);
+		if(quotationCount > 0)
+		{
+			int keyStrOccurances = countOccurances(line, keyStr, fromIndex);
+			int keyStrIndex = fromIndex;				
+			int closeQuoteIndex = -1;
+			
+			for(int i=0; i<keyStrOccurances ; i++)
+			{				
+				keyStrIndex =  line.indexOf(keyStr, keyStrIndex); //each time check for next index of keyStr
+				
+				closeQuoteIndex = (fromIndex == 0)? -1 : fromIndex;
+				
+				int j = 0;
+				for(; j < quotationCount/2; j++){
+					
+					int openQuoteIndex = line.indexOf("\"",closeQuoteIndex + 1);
+					closeQuoteIndex = line.indexOf("\"",openQuoteIndex+1);
+					
+					if(keyStrIndex > openQuoteIndex && keyStrIndex < closeQuoteIndex)
+					{
+						break;
+					}
+				}
+				
+				if(j >= quotationCount/2 )
+				{
+					return keyStrIndex;
+				}
+				
+				keyStrIndex += keyStr.length();
+			}
+			
+			return -1;
+		}
+		else
+		{
+			return line.indexOf(keyStr, fromIndex);
+		}
 	}
 	
 	public static String removeSignleLineCommentsFromLine(String line)
@@ -254,14 +341,13 @@ public class AddLogsToMethodsAndroid {
 	
 	public static String removeClosedCommentsFromLine(String line)
 	{
-		int closeCommentsCount = countOccurances(line,"*/");
-		
+		int closeCommentsCount = countOccurancesOutsideLiteral(line,"*/");
 		for(int i=0; i< closeCommentsCount; i++)
 		{
-			int openCommentIndex =  line.indexOf("/*");
+			int openCommentIndex =  indexOutsideStringLiteral(line, "/*");
 			if(openCommentIndex != -1)
 			{
-				int closeCommentIndex =  line.indexOf("*/", openCommentIndex);
+				int closeCommentIndex = indexOutsideStringLiteral(line, "*/", openCommentIndex);
 				if(closeCommentIndex != -1)
 				{
 					line = line.replace(line.substring(openCommentIndex, closeCommentIndex+2),"");
@@ -296,11 +382,11 @@ public class AddLogsToMethodsAndroid {
 				if(line.contains("/*"))
 				{
 					line = removeClosedCommentsFromLine(line); // remove closed comments
-					if(line.contains("/*"))
+					if(indexOutsideStringLiteral(line, "/*") != -1)
 					{
-						if(!line.startsWith("/*")) //only one /* is there and it is starting, this means no uncomment text present
+						if(!line.startsWith("/*")) //only one /* is present, means the last part is comment only
 						{
-							line = line.substring(0, line.indexOf("/*") - 1); // since only one open comment is left, we take the uncommented string and write
+							line = line.substring(0, line.indexOf("/*")); // since only one open comment is left, we take the uncommented string and write
 							if(!line.trim().isEmpty())
 							{
 								fWriter.write(line);
@@ -403,48 +489,7 @@ public class AddLogsToMethodsAndroid {
 		}
 	}
 	
-	public static int indexOutsideStringLiteral(String line, String keyStr)
-	{
-		int quotationCount = countOccurances(line,"\"");
-		if(quotationCount > 0)
-		{
-			int keyStrOccurances = countOccurances(line,keyStr);
-			int keyStrIndex = 0;				
-			int closeQuoteIndex = -1;
-			
-			for(int i=0; i<keyStrOccurances ; i++)
-			{				
-				keyStrIndex =  line.indexOf(keyStr, keyStrIndex); //each time check for next index of keyStr
-				
-				closeQuoteIndex = -1;
-				
-				int j = 0;
-				for(; j < quotationCount/2; j++){
-					
-					int openQuoteIndex = line.indexOf("\"",closeQuoteIndex + 1);
-					closeQuoteIndex = line.indexOf("\"",openQuoteIndex+1);
-					
-					if(keyStrIndex > openQuoteIndex && keyStrIndex < closeQuoteIndex)
-					{
-						break;
-					}
-				}
-				
-				if(j >= quotationCount/2 )
-				{
-					return keyStrIndex;
-				}
-				
-				keyStrIndex += keyStr.length();
-			}
-			
-			return -1;
-		}
-		else
-		{
-			return line.indexOf(keyStr);
-		}
-	}
+	
 	
 	public static void makeReturnStmtsSingleLine(File file)
 	{
@@ -468,17 +513,24 @@ public class AddLogsToMethodsAndroid {
 				
 				if(isFoundOutsideLiteral(line, "return;") || isFoundOutsideLiteral(line, "return "))
 				{
-					do
+					if(isFoundOutsideLiteral(line, " new "))
 					{
-						singleReturnStmt += line.trim();
-					}while(!line.trim().endsWith(";") && ((line = fReader.readLine()) != null));
-					
-					if(!singleReturnStmt.trim().startsWith(RETURN_STR)){
+						singleReturnStmt = line;
+					}
+					else
+					{
+						do
+						{
+							singleReturnStmt += " " + line.trim();
+						}while(!line.trim().endsWith(";") && ((line = fReader.readLine()) != null));
 						
-						fWriter.write(createIndentFromLine(previousLine) + singleReturnStmt.substring(0, singleReturnStmt.indexOf(RETURN_STR)-1));
-						fWriter.newLine();
-						
-						singleReturnStmt = singleReturnStmt.substring(singleReturnStmt.indexOf(RETURN_STR));
+						if(!singleReturnStmt.trim().startsWith(RETURN_STR)){
+							
+							fWriter.write(createIndentFromLine(previousLine) + singleReturnStmt.substring(0, singleReturnStmt.indexOf(RETURN_STR)));
+							fWriter.newLine();
+							
+							singleReturnStmt = singleReturnStmt.substring(singleReturnStmt.indexOf(RETURN_STR));
+						}
 					}
 					
 					fWriter.write(createIndentFromLine(previousLine) + singleReturnStmt);
@@ -508,58 +560,13 @@ public class AddLogsToMethodsAndroid {
 	
 	public static void makeConditionalStmtsSingleLine(File file)
 	{
-		try
+		
+		if(condStmtMatcherStringsArr.length == 0)
+			return;
+		
+		for (String condStmtMatcher : condStmtMatcherStringsArr)
 		{
-			String filename = file.getName();
-			BufferedReader fReader = new BufferedReader(new FileReader(file));
-			BufferedWriter fWriter = new BufferedWriter(new FileWriter(filename+"_tmp"));
-			String line = "";
-			String singleCondStmt = "";
-			int openBracketCount = 0;
-	
-			while ((line = fReader.readLine()) != null) {
-				
-				singleCondStmt = "";
-				openBracketCount = 0;
-				
-				if(line != null && line.trim().isEmpty())
-				{
-					continue;
-				}
-				
-				if(!mustNotContainCondToBeFunction(line))
-				{
-					String spaces = createIndentFromLine(line);
-					do
-					{
-						singleCondStmt += line.trim();
-						openBracketCount += countOccurances(line,"(");
-						openBracketCount -= countOccurances(line,")");
-						
-						if(openBracketCount <= 0 )
-						{
-							break;
-						}
-						
-					}while((line = fReader.readLine() ) != null);
-					
-					line = spaces + singleCondStmt;
-				}				
-				
-				fWriter.write(line);
-				fWriter.newLine();
-			}
-			
-			fWriter.close();
-			fReader.close();
-			
-			file.delete();
-			File temp_file = new File(filename+"_tmp"); 
-			temp_file.renameTo(file);
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
+			makeStmtsSignleLineByKey(file, condStmtMatcher );
 		}
 	}
 	
@@ -592,26 +599,26 @@ public class AddLogsToMethodsAndroid {
 				if(line.contains(keyStr))
 				{		
 					String spaces = createIndentFromLine(line);
-					
 					String fromKeyStr = line.substring(line.indexOf(keyStr));
+					
 					openBracketCount += countOccurances(fromKeyStr,"(");
 					openBracketCount -= countOccurances(fromKeyStr,")");
 					
 					if(openBracketCount <= 0 || fromKeyStr.endsWith("{") || fromKeyStr.endsWith("}") )
 					{
-						singleStmt += line.trim();
+						singleStmt += " " +line.trim();
 					}
 					else
 					{
-						singleStmt += line.trim();
+						singleStmt += " " + line.trim();
 						line = fReader.readLine();
 						do
 						{
-							singleStmt += line.trim();
+							singleStmt += " " + line.trim();
 							openBracketCount += countOccurances(line,"(");
 							openBracketCount -= countOccurances(line,")");
 							
-							if(openBracketCount <= 0 || fromKeyStr.endsWith("{") || fromKeyStr.endsWith("}"))
+							if(openBracketCount <= 0 || line.endsWith("{") || line.endsWith("}"))
 							{
 								break;
 							}
@@ -622,7 +629,7 @@ public class AddLogsToMethodsAndroid {
 					
 					if(flag == SPLIT_TO_SEPARATE_LINE && !singleStmt.trim().startsWith(keyStr)){
 						
-						fWriter.write(spaces + singleStmt.substring(0, singleStmt.indexOf(keyStr)-1));
+						fWriter.write(spaces + singleStmt.substring(0, singleStmt.indexOf(keyStr)));
 						fWriter.newLine();
 						
 						singleStmt = singleStmt.substring(singleStmt.indexOf(keyStr));
@@ -760,7 +767,7 @@ public class AddLogsToMethodsAndroid {
 
 			while ((line = fReader.readLine()) != null) {
 				++lineno;
-				printLogs("lineno: "+lineno+", line ==> " + line);
+				printLogs("updateFile lineno: "+lineno+", line ==> " + line);
 				
 				if(line != null && line.trim().isEmpty()) //to avoid empty lines
 				{
@@ -773,7 +780,7 @@ public class AddLogsToMethodsAndroid {
 				}
 				
 				//to add the exit log
-				printLogs("1calling checkAndAddExitLog when isInfiniteLoop "+isInfiniteLoop);
+				printLogs("updateFile 1calling checkAndAddExitLog when isInfiniteLoop "+isInfiniteLoop);
 				boolean openBracesAdded = checkAndAddExitLog(fWriter, line, previousLine, indentationSpaces);
 				
 				fWriter.write(line);
@@ -815,7 +822,8 @@ public class AddLogsToMethodsAndroid {
 					{
 						String nextLine = fReader.readLine(); //need to add log only after the super class method call
 						lineno++;
-						//printLogs("lineno: "+lineno+", nextLine ==> " + nextLine);
+						printLogs("updateFile lineno: "+lineno+", nextLine ==> " + nextLine);
+						
 						
 						if(line.trim().endsWith(")"))
 						{
@@ -824,7 +832,6 @@ public class AddLogsToMethodsAndroid {
 							{
 								fWriter.write(nextLine);
 								fWriter.newLine();
-								//isInsideFunction = false;
 								continue;
 							}
 														
@@ -835,19 +842,22 @@ public class AddLogsToMethodsAndroid {
 								
 								do
 								{
+									printLogs("updateFile lineno: "+lineno+", nextLine ==> " + nextLine);
 									fWriter.write(nextLine);
 									fWriter.newLine();
-									functionLine += nextLine.trim();
+									functionLine += " " + nextLine.trim();
 									
 								}while(!nextLine.trim().endsWith("{") && !nextLine.trim().endsWith(";") && (nextLine = fReader.readLine()) != null);
 								
-								if(nextLine.trim().endsWith(";") || functionLine.contains("@"))
+								if(!mustNotContainToBeFunction(functionLine) || nextLine.trim().endsWith(";") || functionLine.contains("@"))
 								{
 									continue;
 								}
 								
 								//post reading one line after {
 								nextLine = fReader.readLine();
+								printLogs("updateFile lineno: "+lineno+", nextLine ==> " + nextLine);
+								
 							}
 						}
 						
@@ -866,14 +876,14 @@ public class AddLogsToMethodsAndroid {
 						String entryLogStr = indentationSpaces + "    " + getEntryLogStr();
 						fWriter.write(entryLogStr);
 						fWriter.newLine();
-						printLogs("Entry log is added");
+						printLogs("updateFile Entry log is added");
 						
 						if(isFoundOutsideLiteral(nextLine, "while (true)") || isFoundOutsideLiteral(nextLine,"while (true)")) //will never come out of loop so dont add exit log
 						{
 							isInfiniteLoop = true;
 						}
 						
-						printLogs("2calling checkAndAddExitLog when isInfiniteLoop "+isInfiniteLoop+" openBracesCount: "+openBracesCount);
+						printLogs("updateFile 2calling checkAndAddExitLog when isInfiniteLoop "+isInfiniteLoop+" openBracesCount: "+openBracesCount);
 						openBracesAdded = checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
 						previousLine = nextLine;
 						
@@ -994,7 +1004,7 @@ public class AddLogsToMethodsAndroid {
 
 			while ((line = fReader.readLine()) != null) {
 				lineNo++;
-				if(line.contains("class "+className))
+				if(line.contains("class "+className+" "))
 				{
 					while(line != null && !line.trim().endsWith("{"))
 					{
