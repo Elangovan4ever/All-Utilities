@@ -601,8 +601,8 @@ public class AddLogsToMethodsAndroid {
 					String spaces = createIndentFromLine(line);
 					String fromKeyStr = line.substring(line.indexOf(keyStr));
 					
-					openBracketCount += countOccurances(fromKeyStr,"(");
-					openBracketCount -= countOccurances(fromKeyStr,")");
+					openBracketCount += countOccurancesOutsideLiteral(fromKeyStr,"(");
+					openBracketCount -= countOccurancesOutsideLiteral(fromKeyStr,")");
 					
 					if(openBracketCount <= 0 || fromKeyStr.endsWith("{") || fromKeyStr.endsWith("}") )
 					{
@@ -615,8 +615,8 @@ public class AddLogsToMethodsAndroid {
 						do
 						{
 							singleStmt += " " + line.trim();
-							openBracketCount += countOccurances(line,"(");
-							openBracketCount -= countOccurances(line,")");
+							openBracketCount += countOccurancesOutsideLiteral(line,"(");
+							openBracketCount -= countOccurancesOutsideLiteral(line,")");
 							
 							if(openBracketCount <= 0 || line.endsWith("{") || line.endsWith("}"))
 							{
@@ -797,12 +797,12 @@ public class AddLogsToMethodsAndroid {
 				if(!mustNotContainCondToBeFunction(line))
 				{
 					isCondStmt = true;
-					openBracketCount = countOccurances(line,"(");
+					openBracketCount = countOccurancesOutsideLiteral(line,"(");
 				}
 				
 				if(openBracketCount > 0)
 				{
-					openBracketCount -= countOccurances(line,")");
+					openBracketCount -= countOccurancesOutsideLiteral(line,")");
 					if(openBracketCount > 0)
 					{
 						continue;
@@ -930,8 +930,8 @@ public class AddLogsToMethodsAndroid {
 		{
 			if(isInsideFunction == true && openBracesCount > 0)
 			{
-				openBracesCount += countOccurances(line,"{");
-				openBracesCount -= countOccurances(line,"}");
+				openBracesCount += countOccurancesOutsideLiteral(line,"{");
+				openBracesCount -= countOccurancesOutsideLiteral(line,"}");
 				if(openBracesCount > 0) //function not yet done
 				{
 					//this is for return in between functions, based on some conditions
