@@ -3,8 +3,6 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 
-import javax.sound.sampled.Line;
-
 public class AddLogsToMethodsAndroid {
 	
 	private static boolean testLocalFiles = true;
@@ -12,7 +10,8 @@ public class AddLogsToMethodsAndroid {
 	
 	public static int firstFuncLineNum = 0;
 	
-	public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\core\\java\\com\\android\\server"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\core\\java\\com\\android\\server"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\java","Z:\\workspace\\ROW_MY18\\frameworks\\base\\core\\java"};
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
 	public static final String[] validMatcherStringsArr = {};
@@ -22,10 +21,14 @@ public class AddLogsToMethodsAndroid {
 			"switch (","switch(","catch","synchronized"};
 	public static final String RETURN_STR="return"; 
 	
-	private static int openBracesCount = 0;
-	private static boolean isInsideFunction = false;
-	private static boolean isFunctionReturnAnything = false;
-	private static boolean isInfiniteLoop = false;
+	private class FunctionData
+	{
+		public int openBracesCount = 0;
+		public boolean isFunctionReturnAnything = false;
+		public boolean isInfiniteLoop = false;
+	}
+	
+	private static Stack<FunctionData> functionDataStack = new Stack<FunctionData>();
 	
 	private static boolean wasLastStmtSwitch = false;
 	
@@ -34,6 +37,8 @@ public class AddLogsToMethodsAndroid {
 	
 	private static int filesProcessedCount = 0;
 	private static int totalFilesToProcess = 0;
+	
+	private static AddLogsToMethodsAndroid thisObject = new AddLogsToMethodsAndroid();
 	
 	public static void main(String[] args) {
 		
@@ -791,10 +796,6 @@ public class AddLogsToMethodsAndroid {
 			int openBracketCount = 0;			
 			boolean isCondStmt = false;
 			
-			openBracesCount = 0;
-			isInsideFunction = false;
-			isFunctionReturnAnything = false;
-			
 			int switchStmtOpenBracesCount = 0;
 			boolean isInsideSwitch = false;
 			
@@ -814,7 +815,11 @@ public class AddLogsToMethodsAndroid {
 				
 				if(isFoundOutsideLiteral(line, "while (true)") || isFoundOutsideLiteral(line,"while(true)") ) //will never come out of loop so dont add exit log
 				{
-					isInfiniteLoop = true;
+					if(!functionDataStack.isEmpty())
+					{
+						FunctionData functionData = functionDataStack.peek();
+						functionData.isInfiniteLoop = true;
+					}
 				}
 				
 				if(isFoundOutsideLiteral(line, "switch (") || isFoundOutsideLiteral(line, "switch(") && !isInsideSwitch) 
@@ -854,7 +859,7 @@ public class AddLogsToMethodsAndroid {
 				printLogs("wasLastStmtSwitch: "+wasLastStmtSwitch);
 				
 				//to add the exit log
-				printLogs("updateFile 1calling checkAndAddExitLog when isInfiniteLoop "+isInfiniteLoop);
+				printLogs("updateFile 1calling checkAndAddExitLog");
 				boolean openBracesAdded = checkAndAddExitLog(fWriter, line, previousLine, indentationSpaces);
 				
 				fWriter.write(line);
@@ -873,7 +878,7 @@ public class AddLogsToMethodsAndroid {
 					isCondStmt = true;
 					openBracketCount = countOccurancesOutsideLiteral(line,"(");
 				}
-				
+				//only related to conditional stmts, not to count actual open and end braces which used to calculate the fucntion stack
 				if(isCondStmt)
 				{
 					if(isFoundOutsideLiteral(line, "{") || isFoundOutsideLiteral(line, "}"))
@@ -906,9 +911,16 @@ public class AddLogsToMethodsAndroid {
 						
 						if(line.trim().endsWith(")"))
 						{
-							//if the end of the statment is ; then it cannot be a function. so write and continue to next line.
-							if(nextLine.trim().contains(";") )
+							//if the end of the statement is ; then it cannot be a function. so write and continue to next line.
+							if(nextLine.trim().endsWith(";") )
 							{
+								if(isFoundOutsideLiteral(nextLine, "switch (") || isFoundOutsideLiteral(nextLine, "switch(") && !isInsideSwitch) 
+								{
+									isInsideSwitch = true;
+								}
+								
+								checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
+								
 								fWriter.write(nextLine);
 								fWriter.newLine();
 								continue;
@@ -922,6 +934,14 @@ public class AddLogsToMethodsAndroid {
 								do
 								{
 									printLogs("updateFile lineno: "+lineno+", nextLine ==> " + nextLine);
+									
+									if(isFoundOutsideLiteral(nextLine, "switch (") || isFoundOutsideLiteral(nextLine, "switch(") && !isInsideSwitch) 
+									{
+										isInsideSwitch = true;
+									}
+									
+									checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
+									
 									fWriter.write(nextLine);
 									fWriter.newLine();
 									functionLine += " " + nextLine.trim();
@@ -936,33 +956,51 @@ public class AddLogsToMethodsAndroid {
 								//post reading one line after {
 								nextLine = fReader.readLine();
 								printLogs("updateFile lineno: "+lineno+", nextLine ==> " + nextLine);
-								
 							}
 						}
+						
+						if(isFoundOutsideLiteral(nextLine, "switch (") || isFoundOutsideLiteral(nextLine, "switch(") && !isInsideSwitch) 
+						{
+							isInsideSwitch = true;
+						}	
 						
 						if(nextLine != null && (nextLine.trim().startsWith("super") || nextLine.trim().startsWith("this")
 								&& !nextLine.trim().startsWith("this.")))
 						{
+							checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
+							
 							fWriter.write(nextLine);
 							fWriter.newLine();
 						}						
 						
-						openBracesCount = 1;
-						isInsideFunction = true;
-						isFunctionReturnAnything = false;
-						isInfiniteLoop = false;
+						if(!functionDataStack.isEmpty())
+						{
+							FunctionData lastfunctionData = functionDataStack.peek();
+							
+							lastfunctionData.openBracesCount = (lastfunctionData.openBracesCount > 0)? lastfunctionData.openBracesCount - 1: lastfunctionData.openBracesCount ;
+							
+							printLogs("Storing last functional data's openBracesCount as : "+lastfunctionData.openBracesCount);
+						}
+						
+						FunctionData functionData = thisObject.new FunctionData();
+						functionData.openBracesCount = 1;
+						functionData.isFunctionReturnAnything = false;
+						functionData.isInfiniteLoop = false;
+						
+						functionDataStack.push(functionData);
+						
 						indentationSpaces = createIndentFromLine(line);
 						String entryLogStr = indentationSpaces + "    " + getEntryLogStr();
 						fWriter.write(entryLogStr);
 						fWriter.newLine();
-						printLogs("updateFile Entry log is added");
+						printLogs("\n--\nupdateFile Entry log is added\n--\n");
 						
 						if(isFoundOutsideLiteral(nextLine, "while (true)") || isFoundOutsideLiteral(nextLine,"while(true)") ) //will never come out of loop so dont add exit log
 						{
-							isInfiniteLoop = true;
+							functionData.isInfiniteLoop = true;
 						}
 						
-						printLogs("updateFile 2calling checkAndAddExitLog when isInfiniteLoop "+isInfiniteLoop+" openBracesCount: "+openBracesCount);
+						printLogs("updateFile 2calling checkAndAddExitLog when isInfiniteLoop "+functionData.isInfiniteLoop+" openBracesCount: "+functionData.openBracesCount);
 						openBracesAdded = checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
 						previousLine = nextLine;
 						
@@ -1007,11 +1045,18 @@ public class AddLogsToMethodsAndroid {
 		boolean openBracesAdded = false;
 		try
 		{
-			if(isInsideFunction == true && openBracesCount > 0)
+			if(functionDataStack.isEmpty())
 			{
-				openBracesCount += countOccurancesOutsideLiteral(line,"{");
-				openBracesCount -= countOccurancesOutsideLiteral(line,"}");
-				if(openBracesCount > 0) //function not yet done
+				return false;
+			}
+			
+			FunctionData functionData = functionDataStack.peek();
+			
+			if(functionData.openBracesCount > 0)
+			{
+				functionData.openBracesCount += countOccurancesOutsideLiteral(line,"{");
+				functionData.openBracesCount -= countOccurancesOutsideLiteral(line,"}");
+				if(functionData.openBracesCount > 0) //function not yet done
 				{
 					//this is for return in between functions, based on some conditions
 					if( isFoundOutsideLiteral(line, "return;") || isFoundOutsideLiteral(line, "return ") || isFoundOutsideLiteral(line, "throw ") ) 
@@ -1023,13 +1068,13 @@ public class AddLogsToMethodsAndroid {
 							openBracesAdded = true;
 						}
 						
-						printLogs("Exit log is added, in between function");
+						printLogs("\n--\nExit log is added, in between function\n--\n");
 						fWriter.write(indentationSpaces + getExitLogStr());
 						fWriter.newLine();
 						
 						if(isFoundOutsideLiteral(line, "return "))
 						{
-							isFunctionReturnAnything = true;		
+							functionData.isFunctionReturnAnything = true;		
 						}
 						
 					}
@@ -1037,22 +1082,24 @@ public class AddLogsToMethodsAndroid {
 				
 				printLogs("\ncheckAndAddExitLog: line: "+line);
 				printLogs("checkAndAddExitLog: previousLine: "+previousLine);
-				printLogs("checkAndAddExitLog: openBracesCount: "+openBracesCount+"\n");
-				if(openBracesCount == 0) //last closing brace met for the function, so function is done
+				printLogs("checkAndAddExitLog: openBracesCount: "+functionData.openBracesCount + "\n");
+				if(functionData.openBracesCount == 0) //last closing brace met for the function, so function is done
 				{
-					isInsideFunction = false;
-					
 					printLogs("checkAndAddExitLog wasLastStmtSwitch: "+wasLastStmtSwitch);
 					
-					if( !isFoundOutsideLiteral(previousLine, "return;") && !isFoundOutsideLiteral(previousLine, "return ") 
-							&& !isFoundOutsideLiteral(previousLine, "throw ") && !isFunctionReturnAnything &&  !isInfiniteLoop && !wasLastStmtSwitch) //dont add exit log after the return statement
+					if( !isFoundOutsideLiteral(previousLine, "return;") && !isFoundOutsideLiteral(previousLine, "return ")   //dont add exit log after the return statement
+							&& !isFoundOutsideLiteral(previousLine, "throw ") //dont add exit log if the function throws at last line
+							&& !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
+							&& !functionData.isFunctionReturnAnything //dont add exit log if the function must return something
+							&&  !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
+							&& !wasLastStmtSwitch)  //dont add exit log if the function has switch and doesn't not break
 					{
-						printLogs("Exit log is added, at the end of the function");
+						printLogs("\n--\nExit log is added, at the end of the function\n--\n");
 						fWriter.write(indentationSpaces + getExitLogStr());
 						fWriter.newLine();
 					}
 					
-					isFunctionReturnAnything = false;
+					functionDataStack.pop();
 				}
 			}
 		}
