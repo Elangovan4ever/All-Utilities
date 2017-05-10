@@ -27,6 +27,8 @@ public class AddLogsToMethodsAndroid {
 	private static boolean isFunctionReturnAnything = false;
 	private static boolean isInfiniteLoop = false;
 	
+	private static boolean wasLastStmtSwitch = false;
+	
 	private static int SPLIT_TO_SEPARATE_LINE = 1;
 	private static int DONT_SPLIT_TO_SEPARATE_LINE = 2;
 	
@@ -793,6 +795,11 @@ public class AddLogsToMethodsAndroid {
 			isInsideFunction = false;
 			isFunctionReturnAnything = false;
 			
+			int switchStmtOpenBracesCount = 0;
+			boolean isInsideSwitch = false;
+			
+			wasLastStmtSwitch = false;
+			
 			String previousLine = "";
 			String indentationSpaces = "";
 
@@ -809,6 +816,42 @@ public class AddLogsToMethodsAndroid {
 				{
 					isInfiniteLoop = true;
 				}
+				
+				if(isFoundOutsideLiteral(line, "switch (") || isFoundOutsideLiteral(line, "switch(") && !isInsideSwitch) 
+				{
+					isInsideSwitch = true;
+					
+				}
+				
+				printLogs("updateFile isInsideSwitch : "+isInsideSwitch);
+				if(isInsideSwitch)
+				{
+					if(line.contains("break;"))
+					{
+						wasLastStmtSwitch = false;
+						isInsideSwitch = false;
+					}
+					else
+					{
+						switchStmtOpenBracesCount += countOccurancesOutsideLiteral(line,"{");
+						switchStmtOpenBracesCount -= countOccurancesOutsideLiteral(line,"}");
+						
+						printLogs("updateFile switchStmtOpenBracesCount : "+switchStmtOpenBracesCount);
+						
+						if(switchStmtOpenBracesCount == 0 )
+						{
+							wasLastStmtSwitch = true;
+							isInsideSwitch = false;
+						}
+					}
+				}
+				
+				if(wasLastStmtSwitch && !line.trim().equals("}"))
+				{
+					wasLastStmtSwitch = false;
+				}
+				
+				printLogs("wasLastStmtSwitch: "+wasLastStmtSwitch);
 				
 				//to add the exit log
 				printLogs("updateFile 1calling checkAndAddExitLog when isInfiniteLoop "+isInfiniteLoop);
@@ -999,8 +1042,10 @@ public class AddLogsToMethodsAndroid {
 				{
 					isInsideFunction = false;
 					
+					printLogs("checkAndAddExitLog wasLastStmtSwitch: "+wasLastStmtSwitch);
+					
 					if( !isFoundOutsideLiteral(previousLine, "return;") && !isFoundOutsideLiteral(previousLine, "return ") 
-							&& !isFoundOutsideLiteral(previousLine, "throw ") && !isFunctionReturnAnything &&  !isInfiniteLoop) //dont add exit log after the return statement
+							&& !isFoundOutsideLiteral(previousLine, "throw ") && !isFunctionReturnAnything &&  !isInfiniteLoop && !wasLastStmtSwitch) //dont add exit log after the return statement
 					{
 						printLogs("Exit log is added, at the end of the function");
 						fWriter.write(indentationSpaces + getExitLogStr());
