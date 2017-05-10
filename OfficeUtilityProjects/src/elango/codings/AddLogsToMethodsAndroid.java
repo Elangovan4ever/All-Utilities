@@ -5,13 +5,20 @@ import java.util.*;
 
 public class AddLogsToMethodsAndroid {
 	
-	private static boolean testLocalFiles = true;
-	private static boolean enableLogs = true;
+	private static boolean testLocalFiles = false;
+	private static boolean enableLogs = false;
+	
+	public static String LOGGER_TYPE_STR = "Log.w";
+	//public static String LOGGER_TYPE_STR = "Slog.w";
+	
+	public static String IMPORT_FOR_LOGGER = "android.util.Log";
+	//public static String IMPORT_FOR_LOGGER = "android.util.Slog";
 	
 	public static int firstFuncLineNum = 0;
 	
-	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\core\\java\\com\\android\\server"};
-	public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\java","Z:\\workspace\\ROW_MY18\\frameworks\\base\\core\\java"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\packages\\inputmethods\\LatinIME\\java"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\java","Z:\\workspace\\ROW_MY18\\frameworks\\base\\core\\java"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\packages\\inputmethods\\LatinIME\\java\\src\\com\\android\\inputmethod\\annotations"};
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
 	public static final String[] validMatcherStringsArr = {};
@@ -26,11 +33,13 @@ public class AddLogsToMethodsAndroid {
 		public int openBracesCount = 0;
 		public boolean isFunctionReturnAnything = false;
 		public boolean isInfiniteLoop = false;
+		
+		public boolean isInsideSwitch = false;	
+		public int switchStmtOpenBracesCount = 0;
+		public boolean wasLastStmtSwitch = false;
 	}
 	
 	private static Stack<FunctionData> functionDataStack = new Stack<FunctionData>();
-	
-	private static boolean wasLastStmtSwitch = false;
 	
 	private static int SPLIT_TO_SEPARATE_LINE = 1;
 	private static int DONT_SPLIT_TO_SEPARATE_LINE = 2;
@@ -171,7 +180,7 @@ public class AddLogsToMethodsAndroid {
 	
 	public static String getEntryLogStr()
 	{
-		return getEntryLogStr("Slog.w");
+		return getEntryLogStr(LOGGER_TYPE_STR);
 	}
 	
 	public static String getEntryLogStr(String loggerType)
@@ -184,7 +193,7 @@ public class AddLogsToMethodsAndroid {
 	
 	public static String getExitLogStr()
 	{
-		return getExitLogStr("Slog.w");
+		return getExitLogStr(LOGGER_TYPE_STR);
 	}
 	
 	public static String getExitLogStr(String loggerType)
@@ -519,25 +528,37 @@ public class AddLogsToMethodsAndroid {
 					continue;
 				}
 				
-				if(isFoundOutsideLiteral(line, "return;") || isFoundOutsideLiteral(line, "return ") || line.trim().equals("return"))
+				if((isFoundOutsideLiteral(line, "return;") || isFoundOutsideLiteral(line, "return ") || line.trim().equals("return")))
 				{
-					if(isFoundOutsideLiteral(line, " new "))
+					if(!line.trim().startsWith(RETURN_STR))
 					{
-						singleReturnStmt = line;
+						int returnStrIndex = indexOutsideStringLiteral(line, RETURN_STR);
+						if( !(line.charAt(returnStrIndex - 1) == ' ' || line.charAt(returnStrIndex - 1) == '{' 
+								|| line.charAt(returnStrIndex - 1) == '}' || line.charAt(returnStrIndex - 1) == ')') )
+						{
+							singleReturnStmt = line;
+						}
 					}
 					else
 					{
-						do
+						if(isFoundOutsideLiteral(line, " new "))
 						{
-							singleReturnStmt += " " + line.trim();
-						}while(!line.trim().endsWith(";") && ((line = fReader.readLine()) != null));
-						
-						if(!singleReturnStmt.trim().startsWith(RETURN_STR)){
+							singleReturnStmt = line;
+						}
+						else
+						{
+							do
+							{
+								singleReturnStmt += " " + line.trim();
+							}while(!line.trim().endsWith(";") && ((line = fReader.readLine()) != null));
 							
-							fWriter.write(createIndentFromLine(previousLine) + singleReturnStmt.substring(0, singleReturnStmt.indexOf(RETURN_STR)));
-							fWriter.newLine();
-							
-							singleReturnStmt = singleReturnStmt.substring(singleReturnStmt.indexOf(RETURN_STR));
+							if(!singleReturnStmt.trim().startsWith(RETURN_STR)){
+								
+								fWriter.write(createIndentFromLine(previousLine) + singleReturnStmt.substring(0, singleReturnStmt.indexOf(RETURN_STR)));
+								fWriter.newLine();
+								
+								singleReturnStmt = singleReturnStmt.substring(singleReturnStmt.indexOf(RETURN_STR));
+							}
 						}
 					}
 					
@@ -796,11 +817,6 @@ public class AddLogsToMethodsAndroid {
 			int openBracketCount = 0;			
 			boolean isCondStmt = false;
 			
-			int switchStmtOpenBracesCount = 0;
-			boolean isInsideSwitch = false;
-			
-			wasLastStmtSwitch = false;
-			
 			String previousLine = "";
 			String indentationSpaces = "";
 
@@ -822,41 +838,7 @@ public class AddLogsToMethodsAndroid {
 					}
 				}
 				
-				if(isFoundOutsideLiteral(line, "switch (") || isFoundOutsideLiteral(line, "switch(") && !isInsideSwitch) 
-				{
-					isInsideSwitch = true;
-					
-				}
-				
-				printLogs("updateFile isInsideSwitch : "+isInsideSwitch);
-				if(isInsideSwitch)
-				{
-					if(line.contains("break;"))
-					{
-						wasLastStmtSwitch = false;
-						isInsideSwitch = false;
-					}
-					else
-					{
-						switchStmtOpenBracesCount += countOccurancesOutsideLiteral(line,"{");
-						switchStmtOpenBracesCount -= countOccurancesOutsideLiteral(line,"}");
-						
-						printLogs("updateFile switchStmtOpenBracesCount : "+switchStmtOpenBracesCount);
-						
-						if(switchStmtOpenBracesCount == 0 )
-						{
-							wasLastStmtSwitch = true;
-							isInsideSwitch = false;
-						}
-					}
-				}
-				
-				if(wasLastStmtSwitch && !line.trim().equals("}"))
-				{
-					wasLastStmtSwitch = false;
-				}
-				
-				printLogs("wasLastStmtSwitch: "+wasLastStmtSwitch);
+				updateWasLastStmtSwitch(line);
 				
 				//to add the exit log
 				printLogs("updateFile 1calling checkAndAddExitLog");
@@ -914,11 +896,7 @@ public class AddLogsToMethodsAndroid {
 							//if the end of the statement is ; then it cannot be a function. so write and continue to next line.
 							if(nextLine.trim().endsWith(";") )
 							{
-								if(isFoundOutsideLiteral(nextLine, "switch (") || isFoundOutsideLiteral(nextLine, "switch(") && !isInsideSwitch) 
-								{
-									isInsideSwitch = true;
-								}
-								
+								updateWasLastStmtSwitch(nextLine);
 								checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
 								
 								fWriter.write(nextLine);
@@ -935,11 +913,7 @@ public class AddLogsToMethodsAndroid {
 								{
 									printLogs("updateFile lineno: "+lineno+", nextLine ==> " + nextLine);
 									
-									if(isFoundOutsideLiteral(nextLine, "switch (") || isFoundOutsideLiteral(nextLine, "switch(") && !isInsideSwitch) 
-									{
-										isInsideSwitch = true;
-									}
-									
+									updateWasLastStmtSwitch(nextLine);
 									checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
 									
 									fWriter.write(nextLine);
@@ -959,10 +933,7 @@ public class AddLogsToMethodsAndroid {
 							}
 						}
 						
-						if(isFoundOutsideLiteral(nextLine, "switch (") || isFoundOutsideLiteral(nextLine, "switch(") && !isInsideSwitch) 
-						{
-							isInsideSwitch = true;
-						}	
+						updateWasLastStmtSwitch(nextLine);
 						
 						if(nextLine != null && (nextLine.trim().startsWith("super") || nextLine.trim().startsWith("this")
 								&& !nextLine.trim().startsWith("this.")))
@@ -1000,6 +971,8 @@ public class AddLogsToMethodsAndroid {
 							functionData.isInfiniteLoop = true;
 						}
 						
+						updateWasLastStmtSwitch(nextLine);
+						
 						printLogs("updateFile 2calling checkAndAddExitLog when isInfiniteLoop "+functionData.isInfiniteLoop+" openBracesCount: "+functionData.openBracesCount);
 						openBracesAdded = checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
 						previousLine = nextLine;
@@ -1032,6 +1005,52 @@ public class AddLogsToMethodsAndroid {
 		}
 	}
 	
+	public static void updateWasLastStmtSwitch(String line)
+	{
+		if(functionDataStack.isEmpty())
+		{
+			return;
+		}
+		
+		FunctionData functionData = functionDataStack.peek();
+		
+		if(isFoundOutsideLiteral(line, "switch (") || isFoundOutsideLiteral(line, "switch(") && !functionData.isInsideSwitch) 
+		{
+			functionData.isInsideSwitch = true;
+		}
+		
+		printLogs("isInsideSwitch: "+functionData.isInsideSwitch);
+		
+		if(functionData.isInsideSwitch)
+		{
+			if(line.contains("break;"))
+			{
+				functionData.wasLastStmtSwitch = false;
+				functionData.isInsideSwitch = false;
+			}
+			else
+			{
+				functionData.switchStmtOpenBracesCount += countOccurancesOutsideLiteral(line,"{");
+				functionData.switchStmtOpenBracesCount -= countOccurancesOutsideLiteral(line,"}");
+				
+				printLogs("updateFile switchStmtOpenBracesCount : "+functionData.switchStmtOpenBracesCount);
+				
+				if(functionData.switchStmtOpenBracesCount == 0 )
+				{
+					functionData.wasLastStmtSwitch = true;
+					functionData.isInsideSwitch = false;
+				}
+			}
+		}
+		
+		if(functionData.wasLastStmtSwitch && !line.trim().equals("}"))
+		{
+			functionData.wasLastStmtSwitch = false;
+		}
+		
+		printLogs("wasLastStmtSwitch: "+functionData.wasLastStmtSwitch);
+	}
+	
 	public static boolean isFoundOutsideLiteral(String line,String keyStr)
 	{
 		if(line.contains(keyStr) && indexOutsideStringLiteral(line, keyStr) != -1)
@@ -1061,6 +1080,16 @@ public class AddLogsToMethodsAndroid {
 					//this is for return in between functions, based on some conditions
 					if( isFoundOutsideLiteral(line, "return;") || isFoundOutsideLiteral(line, "return ") || isFoundOutsideLiteral(line, "throw ") ) 
 					{
+						if(!line.trim().startsWith(RETURN_STR))
+						{							
+							int returnStrIndex = indexOutsideStringLiteral(line, RETURN_STR);
+							if(!(line.charAt(returnStrIndex - 1) == ' ' || line.charAt(returnStrIndex - 1) == '{' 
+									|| line.charAt(returnStrIndex - 1) == '}' || line.charAt(returnStrIndex - 1) == ')'))
+							{
+								return false;
+							}
+						}
+						
 						if(previousLine.trim().startsWith("if") && !previousLine.trim().endsWith("{")) //we need to add braces for 'if' stmts without braces
 						{
 							fWriter.write(indentationSpaces+"{");
@@ -1085,14 +1114,14 @@ public class AddLogsToMethodsAndroid {
 				printLogs("checkAndAddExitLog: openBracesCount: "+functionData.openBracesCount + "\n");
 				if(functionData.openBracesCount == 0) //last closing brace met for the function, so function is done
 				{
-					printLogs("checkAndAddExitLog wasLastStmtSwitch: "+wasLastStmtSwitch);
+					printLogs("checkAndAddExitLog wasLastStmtSwitch: "+functionData.wasLastStmtSwitch);
 					
 					if( !isFoundOutsideLiteral(previousLine, "return;") && !isFoundOutsideLiteral(previousLine, "return ")   //dont add exit log after the return statement
 							&& !isFoundOutsideLiteral(previousLine, "throw ") //dont add exit log if the function throws at last line
 							&& !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
 							&& !functionData.isFunctionReturnAnything //dont add exit log if the function must return something
-							&&  !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
-							&& !wasLastStmtSwitch)  //dont add exit log if the function has switch and doesn't not break
+							&& !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
+							&& !functionData.wasLastStmtSwitch)  //dont add exit log if the function has switch and doesn't not break
 					{
 						printLogs("\n--\nExit log is added, at the end of the function\n--\n");
 						fWriter.write(indentationSpaces + getExitLogStr());
@@ -1112,7 +1141,7 @@ public class AddLogsToMethodsAndroid {
 	
 	public static void insertImportStmts(File file){
 		
-		String importPackage = "android.util.Slog";
+		String importPackage = "android.util.Log";
 		
 		if(!isImportedAlready(file,importPackage))	
 		{
@@ -1155,11 +1184,9 @@ public class AddLogsToMethodsAndroid {
 			e.printStackTrace();
 		}
 		
-		String importPackage = "android.util.Slog";
-		
-		if(!isImportedAlready(file,importPackage))	
+		if(!isImportedAlready(file,IMPORT_FOR_LOGGER))	
 		{
-			insertLineToFile(file,2,"import "+importPackage+";");
+			insertLineToFile(file,2,"import "+IMPORT_FOR_LOGGER+";");
 		}
 	}
 		
