@@ -8,18 +8,23 @@ public class AddLogsToMethodsAndroid {
 	private static int testLocalFiles = 0;
 	private static int enableLogs = 0;
 	
-	public static String LOGGER_TYPE_STR = "Log.w";
-	//public static String LOGGER_TYPE_STR = "Slog.w";
+	//public static String LOGGER_TYPE_STR = "Log.w";
+	public static String LOGGER_TYPE_STR = "Slog.w";
 	
-	public static String IMPORT_FOR_LOGGER = "android.util.Log";
-	//public static String IMPORT_FOR_LOGGER = "android.util.Slog";
+	//public static String IMPORT_FOR_LOGGER = "android.util.Log";
+	
+	public static String IMPORT_FOR_LOGGER = "android.util.Slog";
 	
 	public static int firstFuncLineNum = 0;
 	
-	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\packages\\inputmethods\\LatinIME\\java"};
 	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\java","Z:\\workspace\\ROW_MY18\\frameworks\\base\\core\\java"};
 	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\packages\\inputmethods\\LatinIME\\java\\src\\com\\android\\inputmethod\\annotations"};
-	public static final String[] PATHS_TO_ADD_LOGS = {"/home/emanickam/workspace/ROW_MY18/packages/inputmethods/LatinIME/java"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/home/emanickam/workspace/ROW_MY18/packages/inputmethods/LatinIME/java"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/inputmethodservice",
+	//		"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/","/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view/inputmethod",
+	//		"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/java/com/android/server"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/java/com/android/server"};
+	
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
 	public static final String[] validMatcherStringsArr = {};
@@ -89,13 +94,13 @@ public class AddLogsToMethodsAndroid {
 				makeReturnStmtsSingleLine(file);
 				makeConditionalStmtsSingleLine(file);
 				makeStmtsSignleLineByKey(file,"new ");
-				makeStmtsSignleLineByKey(file,"super");
 				makeStmtsSignleLineByKey(file,"this");
-				makeStmtsSignleLineByKey(file,"throw ");
+				makeStmtsSignleLineByKey(file,"throw ",SPLIT_TO_SEPARATE_LINE);
 				makeStmtsSignleLineByKey(file,"Slog.");			
 				makeStmtsSignleLineByKey(file,"print");
 				makeStmtsSignleLineByKey(file,"throws ",SPLIT_TO_SEPARATE_LINE);
 				replaceAllByKey(file,"for (;;)","while (true)");
+				makeStmtsSingleLineByKeyUntilEndChar(file,"super",";");
 				updateFile(file);
 				
 			}
@@ -770,6 +775,83 @@ public class AddLogsToMethodsAndroid {
 		}
 	}
 	
+	public static void makeStmtsSingleLineByKeyUntilEndChar(File file, String keyStr)
+	{
+		makeStmtsSingleLineByKeyUntilEndChar(file, keyStr, ";" );
+	}
+	
+	public static void makeStmtsSingleLineByKeyUntilEndChar(File file, String keyStr, String endChar)
+	{
+		try
+		{
+			String filename = file.getName();
+			BufferedReader fReader = new BufferedReader(new FileReader(file));
+			BufferedWriter fWriter = new BufferedWriter(new FileWriter(filename+"_tmp"));
+			String line = "";
+			String singleStmt = "";
+			int openBracketCount = 0;
+	
+			while ((line = fReader.readLine()) != null) {
+				
+				singleStmt = "";
+				openBracketCount = 0;
+				
+				if(line != null && line.trim().isEmpty())
+				{
+					continue;
+				}
+				
+				if(isFoundOutsideLiteral(line, keyStr))
+				{		
+					String spaces = createIndentFromLine(line);
+					String fromKeyStr = line.substring(line.indexOf(keyStr));
+					
+					openBracketCount += countOccurancesOutsideLiteral(fromKeyStr,"(");
+					openBracketCount -= countOccurancesOutsideLiteral(fromKeyStr,")");
+					
+					if(openBracketCount <= 0 && fromKeyStr.endsWith(endChar) )
+					{
+						singleStmt += " " +line.trim();
+					}
+					else
+					{
+						singleStmt += " " + line.trim();
+						line = fReader.readLine();
+						do
+						{
+							singleStmt += " " + line.trim();
+							openBracketCount += countOccurancesOutsideLiteral(line,"(");
+							openBracketCount -= countOccurancesOutsideLiteral(line,")");
+							
+							if(openBracketCount <= 0 && line.endsWith(endChar))
+							{
+								break;
+							}
+							
+						}while((line = fReader.readLine() ) != null);
+						
+					}
+					
+					line = spaces + singleStmt;
+				}				
+				
+				fWriter.write(line);
+				fWriter.newLine();
+			}
+			
+			fWriter.close();
+			fReader.close();
+			
+			file.delete();
+			File temp_file = new File(filename+"_tmp"); 
+			temp_file.renameTo(file);
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
 	public static void replaceAllByKey(File file, String keyStr, String replaceStr)
 	{
 		try
@@ -916,6 +998,15 @@ public class AddLogsToMethodsAndroid {
 				{
 					continue;
 				}
+				
+				if(line.contains("DEBUG = false") || line.contains("DEBUG =false") || line.contains("DEBUG= false") || line.contains("DEBUG=false"))
+				{
+					line = line.replace("false", "true");
+					fWriter.write(line);
+					fWriter.newLine();
+					continue;
+				}
+				
 				fileLines.add(line);
 				
 				if(isFoundOutsideLiteral(line, "while (true)") || isFoundOutsideLiteral(line,"while(true)") ) //will never come out of loop so dont add exit log
@@ -1033,10 +1124,12 @@ public class AddLogsToMethodsAndroid {
 						if(nextLine != null && (nextLine.trim().startsWith("super") || nextLine.trim().startsWith("this")
 								&& !nextLine.trim().startsWith("this.")))
 						{
+							
 							checkAndAddExitLog(fWriter, nextLine, previousLine, indentationSpaces);
 							
 							fWriter.write(nextLine);
 							fWriter.newLine();
+							
 						}						
 						
 						if(!functionDataStack.isEmpty())
