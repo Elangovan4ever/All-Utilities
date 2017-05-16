@@ -3,8 +3,6 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 
-import javax.sound.sampled.Line;
-
 public class AddLogsToMethodsAndroid_V2 {
 	
 	private static int testLocalFiles = 1;
@@ -19,14 +17,15 @@ public class AddLogsToMethodsAndroid_V2 {
 	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\java","Z:\\workspace\\ROW_MY18\\frameworks\\base\\core\\java"};
 	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\packages\\inputmethods\\LatinIME\\java\\src\\com\\android\\inputmethod\\annotations"};
 	//public static final String[] PATHS_TO_ADD_LOGS = {"/home/emanickam/workspace/ROW_MY18/packages/inputmethods/LatinIME/java"};
-	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java",
-			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/packages",
-			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services"};
+	/*public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/",
+			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view"
+			};*/
+	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/"};
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
 	public static final String[] validMatcherStringsArr = {};
 	public static final String[] validEndMatcherStringsArr = {") {" , "){", ")" };
-	public static final String[] nonValidMatcherStringsArr = {";","=","new ","\"","+","?","@interface"};
+	public static final String[] nonValidMatcherStringsArr = {";","=","new ","\"","+","?","@"};
 	public static final String[] condStmtMatcherStringsArr = {"if (","if(","while (","while(","for (","for(",
 			"switch (","switch(","catch","synchronized"};
 	
@@ -60,6 +59,8 @@ public class AddLogsToMethodsAndroid_V2 {
 		public boolean onlyCommentLine = false;
 		public boolean multiLineCommentOpen = false;
 		
+		public boolean isConditionStmt = false;
+		
 		public int singleLineCommentIndex = -1;
 		public ArrayList<Pair<Integer,Integer>> multiLineCommentsIndexes = new ArrayList<Pair<Integer,Integer>>();
 		
@@ -69,11 +70,15 @@ public class AddLogsToMethodsAndroid_V2 {
 		public ArrayList<String> lineToInsertAfter = new ArrayList<String>();
 		public FunctionData functionData = null;
 		
+		public boolean isEntryLogAdded = false;
+		public boolean isExitLogAdded = false;
+		
 		public void print()
 		{
 			printLogs("\nLineDetails.line: "+lineNum+" "+line);
 			printLogs("LineDetails.onlyCommentLine: "+onlyCommentLine);
 			printLogs("LineDetails.multiLineCommentOpen: "+multiLineCommentOpen);
+			printLogs("LineDetails.isConditionStmt: "+isConditionStmt);
 			printLogs("LineDetails.singleLineCommentIndex: "+singleLineCommentIndex);
 			printLogs("LineDetails.multiLineCommentsIndexes: "+multiLineCommentsIndexes);
 			printLogs("LineDetails.quotationIndexes: "+quotationIndexes);
@@ -91,9 +96,11 @@ public class AddLogsToMethodsAndroid_V2 {
 		public int openBracesCount = 0;
 		public boolean isFunctionReturnAnything = false;
 		public boolean isInfiniteLoop = false;
+		public boolean isAlwaysExpThrownOut = false;
 		public boolean isInsideSwitch = false;	
 		public int switchStmtOpenBracesCount = 0;
 		public boolean wasLastStmtSwitch = false;
+		
 		public void print()
 		{
 			printLogs("FunctionData.functionName: "+functionName);
@@ -108,9 +115,6 @@ public class AddLogsToMethodsAndroid_V2 {
 	}
 	
 	private static Stack<FunctionData> functionDataStack = new Stack<FunctionData>();
-	
-	private static int SPLIT_TO_SEPARATE_LINE = 1;
-	private static int DONT_SPLIT_TO_SEPARATE_LINE = 2;
 	
 	private static int filesProcessedCount = 0;
 	private static int totalFilesToProcess = 0;
@@ -200,9 +204,12 @@ public class AddLogsToMethodsAndroid_V2 {
 			
 			fWriter.close();
 			
-			/*file.delete();
-			File temp_file = new File(filename+"_tmp"); 
-			temp_file.renameTo(file);*/
+			if(testLocalFiles != 1)
+			{
+				file.delete();
+				File temp_file = new File(fileName+"_tmp.java"); 
+				temp_file.renameTo(file);
+			}
 		}
 		catch(IOException e)
 		{
@@ -226,6 +233,7 @@ public class AddLogsToMethodsAndroid_V2 {
 	
 	public static void addMethodLogs(File file, ArrayList<LineDetails> fileContentOriginal, ArrayList<LineDetails> fileContentModified )
 	{
+		functionDataStack.clear();
 		
 		ListIterator<LineDetails> iter = fileContentOriginal.listIterator();
 		
@@ -237,7 +245,6 @@ public class AddLogsToMethodsAndroid_V2 {
 			LineDetails lineDetails = iter.next();
 			
 			printLogs("\naddMethodLogs: Before Modifying line, the details are:");
-			
 			lineDetails.print();
 			
 			LineDetails modifiedlineDetails = modifyLineWithFunctionData(lineDetails, fileContentOriginal, className);
@@ -300,7 +307,7 @@ public class AddLogsToMethodsAndroid_V2 {
 		
 		for(int i = fromIndex - 1 ; i >= 0; i--)
 		{
-			if(line.charAt(i) != ' ' || line.charAt(i) != '\t')
+			if(line.charAt(i) != ' ' && line.charAt(i) != '\t')
 			{
 				boolean foundInsideComment =  false;
 				
@@ -327,6 +334,51 @@ public class AddLogsToMethodsAndroid_V2 {
 		}
 		
 		return -1;
+	}
+	
+	public static Pair<LineDetails, Integer> getNextValidStrIndexEqualsTo(LineDetails lineDetails, ArrayList<LineDetails> fileContent, String keyStr, int fromIndex)
+	{
+		for(int i=lineDetails.lineNum; i < fileContent.size(); i++)
+		{
+			lineDetails = fileContent.get(i);
+			
+			int nextValidStrIndexEqualsTo = getValidIndexOf(lineDetails, fileContent, keyStr, fromIndex);
+			
+			if(nextValidStrIndexEqualsTo != -1)
+			{
+				return thisObject.new Pair<LineDetails, Integer>(lineDetails, nextValidStrIndexEqualsTo);
+			}		
+			
+			fromIndex = 0;
+		}
+		
+		return null;
+	}
+	
+	public static Pair<LineDetails, Integer> getPrevValidStrIndexEqualsTo(LineDetails lineDetails, ArrayList<LineDetails> fileContent, String keyStr, int fromIndex)
+	{
+		boolean firstTime = true;
+		
+		for(int i=lineDetails.lineNum; i >= 0; i--)
+		{
+			lineDetails = fileContent.get(i);
+			
+			if(!firstTime)
+			{
+				fromIndex = lineDetails.line.length() - 1;
+			}
+			
+			int prevValidStrIndexEqualsTo = getLastValidIndexOf(lineDetails, fileContent, keyStr, fromIndex);
+			
+			if(prevValidStrIndexEqualsTo != -1)
+			{
+				return thisObject.new Pair<LineDetails, Integer>(lineDetails, prevValidStrIndexEqualsTo);
+			}		
+			
+			firstTime = false;			
+		}
+		
+		return null;
 	}
 	
 	public static boolean isLineEndsWith(LineDetails lineDetails, ArrayList<LineDetails> fileContent, String keyStr)
@@ -363,7 +415,7 @@ public class AddLogsToMethodsAndroid_V2 {
 				break;
 		}
 		
-		if(keyStrLastIndex  == lineLastIndex)
+		if((keyStrLastIndex + keyStr.length() - 1) == lineLastIndex ) //need to include it
 		{
 			return true;
 		}
@@ -420,6 +472,9 @@ public class AddLogsToMethodsAndroid_V2 {
 		else
 			oppositePairStr = "(";
 		
+		printLogs("getMatchingPair trying to get "+oppositePairStr+" pair for "+keyStr+ " from line: "+lineDetails.line+ " from Index: "+currentIndex);
+		
+		
 		Pair<LineDetails, Integer> matchingPair = thisObject.new Pair<LineDetails, Integer>();
 		
 		if(fileContent.isEmpty())
@@ -434,7 +489,10 @@ public class AddLogsToMethodsAndroid_V2 {
 		
 		stack.push(keyStr);
 		
+		//printLogs("pushing ( from index: "+currentIndex);
+		
 		int i=0;
+		boolean firstTime = true;
 		
 		for( i = lineDetails.lineNum ; !stack.empty() ; )
 		{
@@ -442,22 +500,41 @@ public class AddLogsToMethodsAndroid_V2 {
 					break;
 			else if((keyStr.equals(")") || keyStr.equals("}")) && i < 0) 	break;
 			
-			lineDetails = fileContent.get(i);		
+			lineDetails = fileContent.get(i);
+			
+			if(!firstTime)
+			{
+				if(keyStr.equals("(") || keyStr.equals("{") )
+				{
+					currentIndex = 0;
+				}
+				else if(keyStr.equals(")") || keyStr.equals("}") ) 
+				{
+					currentIndex = lineDetails.line.length() - 1 ;
+				}
+			}
+			firstTime = false;
+			
 			printLogs("getMatchingPair trying to find matching "+oppositePairStr+" for "+keyStr+" in line: "+lineDetails.line);
+			for(int k=0;k<lineDetails.line.length();k++)
+			{
+				printLogsNoNewLine(k+"="+lineDetails.line.charAt(k)+",");
+			}
+			printLogs("");
 
 			ArrayList<Pair<Integer,String>> bracketIndexes = new ArrayList<Pair<Integer,String>>();
 			
 			ArrayList<Integer> oppositePairStrIndexes = getIndexesOutMultiLineCmntQuotes(lineDetails, fileContent, oppositePairStr);
 			ArrayList<Integer> keyStrIndexes = getIndexesOutMultiLineCmntQuotes(lineDetails, fileContent, keyStr);
 			
-			printLogs("getMatchingPair oppositePairStrIndexes: "+oppositePairStrIndexes);
-			printLogs("getMatchingPair keyStrIndexes: "+keyStrIndexes);
+			printLogs("oppositePairStrIndexes: "+oppositePairStrIndexes);
+			printLogs("keyStrIndexes: "+keyStrIndexes);
 			
 			for(int j=0; j < oppositePairStrIndexes.size();j++)
 			{
-				if((keyStr.equals("(") || keyStr.equals("{")) && oppositePairStrIndexes.get(j) <= currentIndex)
+				if((keyStr.equals("(") || keyStr.equals("{")) && oppositePairStrIndexes.get(j) < currentIndex)
 					continue;
-				else if((keyStr.equals(")") || keyStr.equals("}")) && oppositePairStrIndexes.get(j) >= currentIndex)
+				else if((keyStr.equals(")") || keyStr.equals("}")) && oppositePairStrIndexes.get(j) > currentIndex)
 					break;
 				
 				Pair<Integer,String> pair = thisObject.new Pair<Integer,String>(oppositePairStrIndexes.get(j),oppositePairStr);
@@ -466,9 +543,9 @@ public class AddLogsToMethodsAndroid_V2 {
 			
 			for(int j=0;j < keyStrIndexes.size();j++)
 			{
-				if((keyStr.equals("(") || keyStr.equals("{")) && keyStrIndexes.get(j) <= currentIndex)
+				if((keyStr.equals("(") || keyStr.equals("{")) && keyStrIndexes.get(j) < currentIndex)
 					continue;
-				else if((keyStr.equals(")") || keyStr.equals("}")) && keyStrIndexes.get(j) >= currentIndex)
+				else if((keyStr.equals(")") || keyStr.equals("}")) && keyStrIndexes.get(j) > currentIndex)
 					break;
 				
 				Pair<Integer,String> pair = thisObject.new Pair<Integer,String>(keyStrIndexes.get(j),keyStr);
@@ -481,7 +558,7 @@ public class AddLogsToMethodsAndroid_V2 {
 		        }
 		    });
 			
-			printLogs("getMatchingPair bracketIndexes: "+bracketIndexes);
+			printLogs("bracketIndexes: "+bracketIndexes);
 			
 			int j = 0;
 			if(keyStr.equals("(") || keyStr.equals("{"))
@@ -498,13 +575,19 @@ public class AddLogsToMethodsAndroid_V2 {
 				if(bracketIndexes.get(j).second.equals(stack.peek()))
 				{
 					stack.push(bracketIndexes.get(j).second);
-					printLogs("getMatchingPair pushing "+bracketIndexes.get(j).second+" from index: "+bracketIndexes.get(j).first);
+					
+					/*printLogs("pushing "+bracketIndexes.get(j).second+" from index: "+bracketIndexes.get(j).first);
+					printLogs("stack size : "+stack.size());*/
 				}
 				else
 				{
-					stack.pop();
+				 	String poppedStr = stack.pop();
+				 	
+				 	//printLogs("poppedStr: "+poppedStr);
+					
 					if(stack.empty())
 					{
+						//printLogs("stack become empty on : "+bracketIndexes.get(j).first);
 						matchingPair.second = bracketIndexes.get(j).first;
 						matchingPair.first = lineDetails;
 						
@@ -517,12 +600,16 @@ public class AddLogsToMethodsAndroid_V2 {
 					j--;
 			}
 			
-			currentIndex = lineDetails.line.length();
-			
 			if(keyStr.equals("(") || keyStr.equals("{") )
+			{
 				i++;
+			}
 			else if(keyStr.equals(")") || keyStr.equals("}") ) 
+			{
 				i--;
+			}
+			
+			//printLogs("stack size: "+stack.size());
 		}
 			
 		return null;
@@ -530,63 +617,188 @@ public class AddLogsToMethodsAndroid_V2 {
 	
 	public static void checkAndModifyConditionalStmts(LineDetails lineDetails, ArrayList<LineDetails> fileContent, String keyStr)
 	{
-		printLogs("elango checkAndModifyConditionalStmts called: ");
-		int openStrIndex = getValidIndexOf(lineDetails, fileContent, keyStr);
-		if(openStrIndex == -1)
+		int keyStrIndex = getValidIndexOf(lineDetails, fileContent, keyStr);
+		printLogs("checkAndModifyConditionalStmts keyStrIndex: "+keyStrIndex);
+		if(keyStrIndex == -1)
 			return;
 		
-		printLogs("elango openStrIndex: "+openStrIndex);
+		if(keyStrIndex >= 0 && keyStrIndex - 1 == getPrevNonSpaceValidIndex(lineDetails, fileContent, keyStrIndex))
+			return;
 		
-		int openBracketIndex = getValidIndexOf(lineDetails, fileContent, "(", openStrIndex+1);
+		printLogs("checkAndModifyConditionalStmts it is if whole word");
+		
+		if(keyStrIndex < lineDetails.line.length() -1  && keyStrIndex + 1 == getNextNonSpaceValidIndex(lineDetails, fileContent, keyStrIndex + keyStr.length() - 1))
+			return;	
+		
+		printLogs("checkAndModifyConditionalStmts it is if whole word");
+		
+		int openBracketIndex = getValidIndexOf(lineDetails, fileContent, "(", keyStrIndex+1);
 		if(openBracketIndex == -1)
 			return;
 		
-		printLogs("elango openBracketIndex: "+openBracketIndex);
 		
 		Pair<LineDetails, Integer> closeBracketDetails = getMatchingPair(lineDetails, fileContent, "(", openBracketIndex);
 		
-		printLogs("elango closeBracketDetails.first.line: "+closeBracketDetails.first.line);
-		
 		if(closeBracketDetails != null)
 		{
-			printLogs("elango nextNonSpaceValidIndex"+getNextNonSpaceValidIndex(lineDetails, fileContent, closeBracketDetails.second));
+			lineDetails.isConditionStmt = true;
 			
-			if(getNextNonSpaceValidIndex(lineDetails, fileContent, closeBracketDetails.second) != -1)
+			printLogs("elango closeBracketDetails.first.line: "+closeBracketDetails.first.line);
+			printLogs("elango closeBracketDetails.second: "+closeBracketDetails.second);
+			
+			for(int i=0;i<closeBracketDetails.first.line.length();i++)
 			{
-				String tempLine = closeBracketDetails.first.line;
-				closeBracketDetails.first.line = tempLine.substring(0, closeBracketDetails.second+1 );
-				closeBracketDetails.first.lineToInsertAfter.add("{");
-				closeBracketDetails.first.lineToInsertAfter.add(tempLine.substring(closeBracketDetails.second+1));
-				closeBracketDetails.first.lineToInsertAfter.add("}");
-				printLogs("elango closeBracketDetails.first.line: "+closeBracketDetails.first.line);
+				printLogsNoNewLine(i+"="+closeBracketDetails.first.line.charAt(i)+",");
 			}
-			else
+			printLogs("");
+						
+			int nextNonSpaceValidIndex = getNextNonSpaceValidIndex(closeBracketDetails.first, fileContent, closeBracketDetails.second);
+
+			printLogs("elango nextNonSpaceValidIndex: "+nextNonSpaceValidIndex);
+			if(nextNonSpaceValidIndex != -1)
+			printLogs("elango char forund on that: "+closeBracketDetails.first.line.charAt(nextNonSpaceValidIndex));
+			
+			if(nextNonSpaceValidIndex != -1 && closeBracketDetails.first.line.charAt(nextNonSpaceValidIndex) == '{') //ends with {, no need to do anything
+			{
+				closeBracketDetails.first.isConditionStmt = true;
+				return;
+			}
+			else if(nextNonSpaceValidIndex != -1 && closeBracketDetails.first.line.charAt(nextNonSpaceValidIndex) != '{') //does not end with { and something is there after if cond
+			{
+				closeBracketDetails.first.isConditionStmt = true;
+				
+				LineDetails tempLineDetails = closeBracketDetails.first;
+				
+				String tempLine = tempLineDetails.line;
+				String spaces = createIndentFromLine(tempLine);
+				
+				closeBracketDetails.first.lineToInsertAfter.add(spaces+"{");
+				closeBracketDetails.first.lineToInsertAfter.add(spaces + "    " +tempLine.substring(closeBracketDetails.second+1));
+				
+				printLogs("elango tempLineDetails.line"+tempLineDetails.line);
+				printLogs("elango isLineEndsWith "+isLineEndsWith(tempLineDetails, fileContent, ";"));
+				
+				while(!isLineEndsWith(tempLineDetails, fileContent, ";"))
+				{
+					if(tempLineDetails.lineNum > fileContent.size() - 1)
+						break;
+					
+					tempLineDetails = fileContent.get(tempLineDetails.lineNum + 1);
+				}
+				
+				tempLineDetails.lineToInsertAfter.add(spaces+"}");
+				
+				closeBracketDetails.first.line = tempLine.substring(0, closeBracketDetails.second+1 );
+				
+				printLogs("elango added close bracket");
+			}
+			else //does not end {, but nothing is there after if, so in next line we will add brace
 			{
 				if(closeBracketDetails.first.lineNum < fileContent.size() - 1)
 				{
+					LineDetails startLine = fileContent.get(closeBracketDetails.first.lineNum+1);
 					LineDetails nextLine = fileContent.get(closeBracketDetails.first.lineNum+1);
 					
-					printLogs("before 1 elango nextLine: "+nextLine);
+					printLogs("startLine: "+startLine.line);
+					printLogs("1 nextLine: "+nextLine.line);
 					
 					while( nextLine.onlyCommentLine && nextLine.lineNum < fileContent.size() - 1) //bypass if any comment lines
 					{
 						nextLine = fileContent.get(nextLine.lineNum+1);
+						nextLine.isConditionStmt = true;
 					}
 					
-					printLogs("before 2 elango nextLine: "+nextLine);
+					printLogs("2 nextLine: "+nextLine.line);
 					
-					if(!isLineStartsWith(nextLine, fileContent, "{"))
+					while(!isLineEndsWith(nextLine, fileContent, ";")) //go till the stmt finishes
 					{
-						nextLine.lineToInsertBefore.add("{");
-						nextLine.lineToInsertAfter.add("}");
+						if(nextLine.lineNum > fileContent.size() - 1)
+							break;
+						
+						nextLine = fileContent.get(nextLine.lineNum + 1);
 					}
 					
-					printLogs("after 2 elango nextLine: "+nextLine);
+					printLogs("3 nextLine: "+nextLine.line);
+					
+					if(!isLineStartsWith(startLine, fileContent, "{"))
+					{
+						closeBracketDetails.first.isConditionStmt = true;
+						String spaces = createIndentFromLine(lineDetails.line);
+						startLine.lineToInsertBefore.add(spaces+"{");
+						nextLine.lineToInsertAfter.add(spaces+"}");
+						startLine.isConditionStmt = true;
+					}
 				}
+			}
+		}
+	}
+	
+	public static void checkTryCatchFinally(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
+	{
+		int finalizeStrIndex = getValidIndexOf(lineDetails, fileContent, "finally");
+		
+		//printLogs("elango1 finalizeStrIndex: "+finalizeStrIndex);
+		
+		if(finalizeStrIndex == -1)
+			return;
+		
+		Pair<LineDetails, Integer> finallyCloseBracesPair = getPrevValidStrIndexEqualsTo(lineDetails, fileContent, "}", finalizeStrIndex);
+		
+		//printLogs("elango1 finallyCloseBracesPair.first: "+finallyCloseBracesPair.first.line);
+		//printLogs("elango1 finallyCloseBracesPair.second: "+finallyCloseBracesPair.second);
+		
+		Pair<LineDetails, Integer> tryStartingPair = getMatchingPair(lineDetails, fileContent, "}", finallyCloseBracesPair.second);
+		
+		//printLogs("elango1 tryStartingPair.first: "+tryStartingPair.first.line);
+		//printLogs("elango1 tryStartingPair.second: "+tryStartingPair.second);
+		
+		LineDetails tempLineDetails = finallyCloseBracesPair.first;
+		
+		for(int k=tempLineDetails.lineNum; k >= tryStartingPair.first.lineNum; k--)
+		{
+			tempLineDetails = fileContent.get(k);
+			
+			//printLogs("elango1 tempLine: "+tempLineDetails.line);
+			
+			int throwIndex =  getValidIndexOf(tempLineDetails, fileContent, "throw ");
+			
+			//printLogs("elango1 throwIndex: "+throwIndex);
+			
+			if(throwIndex != -1)
+			{
+				Pair<LineDetails, Integer> lastThrowStmtEndPair = getNextValidStrIndexEqualsTo(tempLineDetails, fileContent, ";", throwIndex);
+				
+				//printLogs("elango1 lastThrowStmtEndPair.first: "+lastThrowStmtEndPair.first.line);
+				//printLogs("elango1 lastThrowStmtEndPair.second: "+lastThrowStmtEndPair.second);
+				
+				int throwStmtLineNum = lastThrowStmtEndPair.first.lineNum;
+				
+				//printLogs("elango1 throwStmtLineNum: "+throwStmtLineNum);
+				
+				while( throwStmtLineNum < finallyCloseBracesPair.first.lineNum && 
+						(lastThrowStmtEndPair.first.line.trim().isEmpty() 
+						|| lastThrowStmtEndPair.first.onlyCommentLine))
+				{
+					throwStmtLineNum++;
+				}
+				
+				//printLogs("elango1 throwStmtLineNum: "+throwStmtLineNum);
+				//printLogs("elango1 finallyCloseBracesPair.first.lineNum: "+finallyCloseBracesPair.first.lineNum);
+				
+				if(throwStmtLineNum + 1 ==  finallyCloseBracesPair.first.lineNum)
+				{
+					if(!functionDataStack.isEmpty())
+					{
+						FunctionData functionData = functionDataStack.peek();
+						functionData.isAlwaysExpThrownOut = true;
+					}
+					break;
+				}
+				
+				break;
 			}
 			
 		}
-		
 	}
 	
 	public static LineDetails modifyLineWithFunctionData(LineDetails lineDetails, ArrayList<LineDetails> fileContentOriginal, String className)
@@ -597,9 +809,13 @@ public class AddLogsToMethodsAndroid_V2 {
 		if(lineDetails.lineNum > 0)
 			previousLineDetails = fileContentOriginal.get(lineDetails.lineNum - 1);
 		
+		if(!functionDataStack.isEmpty())
+		{
+			lineDetails.functionData = functionDataStack.peek();
+		}
+		
 		if(previousLineDetails != null)
 		{
-			lineDetails.functionData = previousLineDetails.functionData;
 			lineDetails.className = previousLineDetails.className;
 		}
 		
@@ -614,12 +830,44 @@ public class AddLogsToMethodsAndroid_V2 {
 			return lineDetails;
 		}
 		
+		if(isLineContainsValidStr(lineDetails, fileContentOriginal, "DEBUG = false") 
+				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "DEBUG =false") 
+				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "DEBUG= false") 
+				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "DEBUG=false") )
+		{
+			lineDetails.line = lineDetails.line.replace("false", "true");
+			return lineDetails;
+		}
+		
+		/*if(testLocalFiles == 0)
+			return lineDetails;*/
+			
+		updateWasLastStmtSwitch(lineDetails, fileContentOriginal);
+		
 		if(!mustNotContainCondToBeFunction(lineDetails, fileContentOriginal)) //some conditional statements are there in the line
 		{
 			checkAndModifyConditionalStmts(lineDetails, fileContentOriginal,"if");
 		}
 		
+		checkTryCatchFinally(lineDetails, fileContentOriginal);
+		
 		checkAndAddExitLog(lineDetails, fileContentOriginal);
+		
+		if(lineDetails.isConditionStmt)
+			return lineDetails;
+		
+		if(lineDetails.isEntryLogAdded)
+			return lineDetails;		
+		
+		if(isLineContainsValidStr(lineDetails, fileContentOriginal, "while (true)") || isLineContainsValidStr(lineDetails, fileContentOriginal, "while(true)")
+				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "for (;;)") || isLineContainsValidStr(lineDetails, fileContentOriginal, "for(;;)") ) //will never come out of loop so dont add exit log
+		{
+			if(!functionDataStack.isEmpty())
+			{
+				FunctionData functionData = functionDataStack.peek();
+				functionData.isInfiniteLoop = true;
+			}
+		}
 		
 		if(lineDetails.className.isEmpty() && line.contains("class "+className+" ") || line.endsWith("class "+className) || line.contains("class "+className+"<"))
 		{
@@ -632,45 +880,135 @@ public class AddLogsToMethodsAndroid_V2 {
 			}
 			
 			tempLineDetails.className = className; //to avoid further entering this condition
-			tempLineDetails.lineToInsertAfter.add("public static final String ENTRY_EXIT_TAG = \""+ className +"\";");
+			tempLineDetails.lineToInsertAfter.add(createIndentFromLine(tempLineDetails.line) + "    " + "public static final String ENTRY_EXIT_TAG = \""+ className +"\";");
 		}
 		
-		
+		/*printLogs("elango1 checking line: "+lineDetails.line);
+		printLogs("mustContainToBeFunction(lineDetails, fileContentOriginal) : "+mustContainToBeFunction(lineDetails, fileContentOriginal));
+		printLogs("mustEndWithToBeFunction(lineDetails, fileContentOriginal): "+mustEndWithToBeFunction(lineDetails, fileContentOriginal));
+		printLogs("mustNotContainToBeFunction(lineDetails, fileContentOriginal): "+mustNotContainToBeFunction(lineDetails, fileContentOriginal));
+		printLogs("mustNotContainCondToBeFunction(lineDetails, fileContentOriginal): "+mustNotContainCondToBeFunction(lineDetails, fileContentOriginal));*/
 		
 		if(mustContainToBeFunction(lineDetails, fileContentOriginal) && mustEndWithToBeFunction(lineDetails, fileContentOriginal)
-				&& mustNotContainToBeFunction(lineDetails, fileContentOriginal) && mustNotContainCondToBeFunction(lineDetails, fileContentOriginal))
+				&& mustNotContainToBeFunction(lineDetails, fileContentOriginal) && mustNotContainCondToBeFunction(lineDetails, fileContentOriginal)
+				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "throws "))
 		{		
-			printLogs("\n/*== may be function ==*/");
 			LineDetails openBraceLineDetails = lineDetails;
 			
+			if(isLineContainsValidStr(lineDetails, fileContentOriginal, ") {") && isLineContainsValidStr(lineDetails, fileContentOriginal, "}"))
+			{
+				return lineDetails;
+			}
+			
 			if(isLineEndsWith(lineDetails, fileContentOriginal, ")"))
-			{				
-				printLogs("line ends with close bracket");
+			{		
+				if(isLineStartsWith(lineDetails, fileContentOriginal, "("))
+				{
+					if(previousLineDetails != null && (
+							!mustNotContainToBeFunction(previousLineDetails, fileContentOriginal) 
+							|| !mustNotContainCondToBeFunction(previousLineDetails, fileContentOriginal)))
+					{
+						return lineDetails;
+					}
+							
+				}
+				
 				for(int j= openBraceLineDetails.lineNum+1 ; j<fileContentOriginal.size(); j++)
 				{
+					if(isLineContainsValidStr(openBraceLineDetails, fileContentOriginal, ";"))
+						return lineDetails;
+					
 					openBraceLineDetails = fileContentOriginal.get(j);
-					if(isLineStartsWith(openBraceLineDetails, fileContentOriginal, "{"))
+					if(isLineContainsValidStr(openBraceLineDetails, fileContentOriginal, "{"))
 					{
 						break;
 					}
 				}
 			}
 			
+			Pair<String, LineDetails> functionNameInfo = null;
+			
+			if(isLineContainsValidStr(lineDetails, fileContentOriginal, "throws "))
+			{
+				if(lineDetails.isEntryLogAdded)
+					return lineDetails;
+								
+				if(lineDetails.line.endsWith(";"))
+					return lineDetails;
+				
+				for(int j= openBraceLineDetails.lineNum ; j<fileContentOriginal.size(); j++)
+				{
+					openBraceLineDetails = fileContentOriginal.get(j);
+					if(isLineContainsValidStr(openBraceLineDetails, fileContentOriginal, "{"))
+					{
+						break;
+					}
+				}
+				
+				int throwsStrIndex = getValidIndexOf(lineDetails, fileContentOriginal, "throws");
+			
+				printLogs("elango  throwsStrIndex: "+throwsStrIndex);
+				Pair<LineDetails, Integer> closeBracketFuncPair = getPrevValidStrIndexEqualsTo(lineDetails, fileContentOriginal, ")", throwsStrIndex);
+				printLogs("elango closeBracketFuncPair.first.line: "+closeBracketFuncPair.first.line);
+				printLogs("elango closeBracketFuncPair.second: "+closeBracketFuncPair.second);
+				
+				functionNameInfo = getFunctionName(closeBracketFuncPair.first, fileContentOriginal);
+				printLogs("elango 1 functionName: "+functionNameInfo.first);
+			}
+			else
+			{
+				int closeBracketIndex = getLastValidIndexOf(lineDetails, fileContentOriginal, ")");
+				Pair<LineDetails, Integer> matchingPairData = getMatchingPair(lineDetails, fileContentOriginal,")", closeBracketIndex);
+				
+				if(!mustNotContainCondToBeFunction(matchingPairData.first, fileContentOriginal) || !mustNotContainToBeFunction(matchingPairData.first, fileContentOriginal) )
+				{
+					return lineDetails;
+				}
+				
+				functionNameInfo = getFunctionName(lineDetails, fileContentOriginal);
+				printLogs("elango 2 functionName: "+functionNameInfo.first);
+			}
+			
+			if(lineDetails.lineNum != openBraceLineDetails.lineNum) //since it wont be counted later
+			{
+				if(!functionDataStack.isEmpty())
+				{
+					FunctionData lastfunctionData = functionDataStack.peek();
+					lastfunctionData.openBracesCount += 1;
+				}
+			}
+			
+			if(openBraceLineDetails.isEntryLogAdded)
+				return lineDetails;
+			
 			if(!functionDataStack.isEmpty())
 			{
 				FunctionData lastfunctionData = functionDataStack.peek();
-				
 				lastfunctionData.openBracesCount = (lastfunctionData.openBracesCount > 0)? lastfunctionData.openBracesCount - 1: lastfunctionData.openBracesCount ;
-				
-				printLogs("Storing last functional data's openBracesCount as : "+lastfunctionData.openBracesCount);
+			}
+			
+			openBraceLineDetails.isEntryLogAdded = true;
+			
+			if(openBraceLineDetails.lineNum + 1 < fileContentOriginal.size())
+			{
+				LineDetails nextLineDetails =  fileContentOriginal.get(openBraceLineDetails.lineNum + 1 );
+				if(isLineContainsValidStr(nextLineDetails, fileContentOriginal, "super") || isLineContainsValidStr(nextLineDetails, fileContentOriginal, "this")
+						&& !isLineStartsWith(nextLineDetails, fileContentOriginal, "this."))
+				{
+					while(!isLineEndsWith(nextLineDetails, fileContentOriginal, ";"))
+					{
+						if(nextLineDetails.lineNum > fileContentOriginal.size() - 1)
+							break;
+						
+						nextLineDetails = fileContentOriginal.get(nextLineDetails.lineNum + 1);
+					}
+					
+					openBraceLineDetails = nextLineDetails;
+				}
 			}
 				
-			String functionName = getFunctionName(lineDetails, fileContentOriginal);
-			
-			printLogs("extracted functionName: "+functionName);
-			
 			FunctionData functionData = thisObject.new FunctionData();
-			functionData.functionName = functionName;
+			functionData.functionName = functionNameInfo.first;
 			functionData.openBracesCount = 1;
 			functionData.isFunctionReturnAnything = false;
 			functionData.isInfiniteLoop = false;
@@ -679,9 +1017,11 @@ public class AddLogsToMethodsAndroid_V2 {
 			
 			lineDetails.functionData = functionData;
 			
-			openBraceLineDetails.lineToInsertAfter.add(getEntryLogStr(lineDetails.functionData.functionName));
+			String spaces = createIndentFromLine(functionNameInfo.second.line);
 			
-			printLogs("\n Entry log is added");
+			openBraceLineDetails.lineToInsertAfter.add(spaces + "    " + getEntryLogStr(lineDetails.functionData.functionName));
+			
+			printLogs("\n================== Entry log is added on line: "+openBraceLineDetails.line);
 			
 		}
 		
@@ -700,7 +1040,7 @@ public class AddLogsToMethodsAndroid_V2 {
 				
 				LineDetails lineDetails = thisObject.new LineDetails();
 				
-				//printLogs("\n\nRead from file - line: "+line);
+				printLogs("\n\nRead from file - line: "+line);
 				
 				lineDetails.lineNum = ++lineNo;
 				lineDetails.line = line;
@@ -722,12 +1062,13 @@ public class AddLogsToMethodsAndroid_V2 {
 					lineDetails.singleLineCommentIndex =  singleLineCommentIndexes.get(0);
 				
 				ArrayList<Integer> multiLineCommentOpenIndexes = getIndexesOutMultiLineCmntQuotes(lineDetails,fileContent,"/*");
-				ArrayList<Integer> multiLineCommentCloseIndexes = getIndexesOutMultiLineCmntQuotes(lineDetails,fileContent,"*/");
-				ArrayList<Integer> quotationIndexes = getIndexesOutMultiLineCmntQuotes(lineDetails,fileContent,"\"");
+				printLogs("multiLineCommentOpenIndexes: "+multiLineCommentOpenIndexes);
 				
-				/*printLogs("multiLineCommentOpenIndexes: "+multiLineCommentOpenIndexes);
+				ArrayList<Integer> multiLineCommentCloseIndexes = getIndexesOutMultiLineCmntQuotes(lineDetails,fileContent,"*/");
 				printLogs("multiLineCommentCloseIndexes: "+multiLineCommentCloseIndexes);
-				printLogs("quotationIndexes: "+quotationIndexes);*/
+				
+				ArrayList<Integer> quotationIndexes = getIndexesOutMultiLineCmntQuotes(lineDetails,fileContent,"\"");
+				printLogs("quotationIndexes: "+quotationIndexes);
 				
 				if(!multiLineCommentOpenIndexes.isEmpty() || !multiLineCommentCloseIndexes.isEmpty() )
 				{
@@ -778,6 +1119,52 @@ public class AddLogsToMethodsAndroid_V2 {
 		}
 	}
 	
+	public static void updateWasLastStmtSwitch(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
+	{
+		if(functionDataStack.isEmpty())
+		{
+			return;
+		}
+		
+		FunctionData functionData = functionDataStack.peek();
+		
+		if(isLineContainsValidStr(lineDetails, fileContent, "switch (") ||isLineContainsValidStr(lineDetails, fileContent, "switch(") && !functionData.isInsideSwitch) 
+		{
+			functionData.isInsideSwitch = true;
+		}
+		
+		printLogs("isInsideSwitch: "+functionData.isInsideSwitch);
+		
+		if(functionData.isInsideSwitch)
+		{
+			if(isLineContainsValidStr(lineDetails, fileContent, "break;"))
+			{
+				functionData.wasLastStmtSwitch = false;
+				functionData.isInsideSwitch = false;
+			}
+			else
+			{
+				functionData.switchStmtOpenBracesCount += getValidOccurancesCount(lineDetails, fileContent, "{");
+				functionData.switchStmtOpenBracesCount -= getValidOccurancesCount(lineDetails, fileContent, "}");
+				
+				printLogs("updateFile switchStmtOpenBracesCount : "+functionData.switchStmtOpenBracesCount);
+				
+				if(functionData.switchStmtOpenBracesCount == 0 )
+				{
+					functionData.wasLastStmtSwitch = true;
+					functionData.isInsideSwitch = false;
+				}
+			}
+		}
+		
+		if(functionData.wasLastStmtSwitch && !lineDetails.line.trim().equals("}"))
+		{
+			functionData.wasLastStmtSwitch = false;
+		}
+		
+		printLogs("wasLastStmtSwitch: "+functionData.wasLastStmtSwitch);
+	}
+	
 	public static ArrayList<Pair<Integer,String>> getOccurancesIndexes(String line, String keyStr)
 	{
 		return getOccurancesIndexes(line, keyStr, 0);
@@ -790,11 +1177,57 @@ public class AddLogsToMethodsAndroid_V2 {
 		int keyStrIndex = index;		
 		while((keyStrIndex = line.indexOf(keyStr, keyStrIndex)) != -1)
 		{
-			if(!(keyStr.equals("\"") && line.charAt(keyStrIndex-1) == '\\' ))
+			if(keyStr.equals("\""))
 			{
-				Pair<Integer,String> pair = thisObject.new Pair<Integer,String>(keyStrIndex, keyStr);
-				keyStrIndexes.add(pair);
+				if(keyStrIndex < line.length() - 2 && line.charAt(keyStrIndex-1) == '\'' && line.charAt(keyStrIndex+1) == '\'')
+				{
+					keyStrIndex += keyStr.length();
+					continue;
+				}
+				
+				if(keyStrIndex > 0 && line.charAt(keyStrIndex-1) == '\\')
+				{
+					int slashCount = 0;
+					for(int i=keyStrIndex - 1; i > 0 && keyStrIndex >= 0 && line.charAt(i) == '\\' ; i--)
+					{
+						slashCount++;
+					}
+					
+					if(slashCount % 2 != 0)
+					{
+						keyStrIndex += keyStr.length();
+						continue;
+					}
+				}
 			}
+
+			if(keyStr.equals("}") || keyStr.equals("{") )
+			{
+				if((keyStrIndex > 0 && line.charAt(keyStrIndex-1) == '\'') && (keyStrIndex < line.length() - 1 && line.charAt(keyStrIndex+1) == '\''))
+				{
+					keyStrIndex += keyStr.length();
+					continue;
+				}
+				
+			/*	if(keyStrIndex > 0 && line.charAt(keyStrIndex-1) == '\\')
+				{
+					int slashCount = 0;
+					for(int i=keyStrIndex - 1; i > 0 && keyStrIndex >= 0 && line.charAt(i) == '\\' ; i--)
+					{
+						slashCount++;
+					}
+					
+					if(slashCount % 2 != 0)
+					{
+						keyStrIndex += keyStr.length();
+						continue;
+					}
+				}*/
+			}
+			
+			Pair<Integer,String> pair = thisObject.new Pair<Integer,String>(keyStrIndex, keyStr);
+			keyStrIndexes.add(pair);
+			
 			keyStrIndex += keyStr.length();
 		}
 		
@@ -830,7 +1263,13 @@ public class AddLogsToMethodsAndroid_V2 {
 			
 			indexesOfExcluders.addAll(getOccurancesIndexes(line, "//", index));
 			indexesOfExcluders.addAll(getOccurancesIndexes(line, "/*", index));
+			
+			//printLogs("open bracket occurances: "+getOccurancesIndexes(line, "/*", index));
+			
 			indexesOfExcluders.addAll(getOccurancesIndexes(line, "*/", index));
+			
+			//printLogs("close bracket occurances: "+getOccurancesIndexes(line, "*/", index));
+			
 			indexesOfExcluders.addAll(getOccurancesIndexes(line, "\"", index));
 			
 			Collections.sort(indexesOfExcluders, new Comparator<Pair<Integer,String>>() {
@@ -839,7 +1278,7 @@ public class AddLogsToMethodsAndroid_V2 {
 		        }
 		    });
 			
-			//printLogs("getIndexesOutMultiLineCmntQuotes: before - indexesOfExcluders: "+indexesOfExcluders);
+			printLogs("getIndexesOutMultiLineCmntQuotes: before - indexesOfExcluders: "+indexesOfExcluders);
 			//Keep only valid excluders like outside of each other.
 			ListIterator<Pair<Integer,String>> iter = indexesOfExcluders.listIterator();
 			int pos = 0;
@@ -869,10 +1308,21 @@ public class AddLogsToMethodsAndroid_V2 {
 				    
 				    if(indexOfExluderPair.second.equals("\""))
 				    {
-				    	while(iter.hasNext() && !iter.next().second.equals("\""))
+				    	while(iter.hasNext())
 				    	{
-				    		iter.remove();
+				    		indexOfExluderPair = iter.next();
+				    		if(!indexOfExluderPair.second.equals("\""))
+				    		{
+				    			iter.remove();
+				    		}
+				    		else
+				    			break;
 				    	}
+				    	
+				    	//while(iter.hasNext() && !iter.next().second.equals("\""))
+				    	//{
+				    	//	iter.remove();
+				    	//}
 				    }
 				    
 				    if(indexOfExluderPair.second.equals("//"))
@@ -883,10 +1333,21 @@ public class AddLogsToMethodsAndroid_V2 {
 				    
 				    if(indexOfExluderPair.second.equals("/*"))
 				    {
-				    	while(iter.hasNext() && !iter.next().second.equals("*/"))
+				    	while(iter.hasNext())
 				    	{
-				    		iter.remove();
+				    		indexOfExluderPair = iter.next();
+				    		if(!indexOfExluderPair.second.equals("*/"))
+				    		{
+				    			iter.remove();
+				    		}
+				    		else
+				    			break;
 				    	}
+				    	//while(iter.hasNext() && !iter.next().second.equals("*/"))
+				    	//{
+				    	//	printLogs("removing */");
+				    	//	iter.remove();
+				    	//}
 				    }
 				    
 				    pos++;
@@ -894,7 +1355,7 @@ public class AddLogsToMethodsAndroid_V2 {
 				}
 			}
 			
-			//printLogs("getIndexesOutMultiLineCmntQuotes: after - indexesOfExcluders: "+indexesOfExcluders);
+			printLogs("getIndexesOutMultiLineCmntQuotes: after - indexesOfExcluders: "+indexesOfExcluders);
 			
 			//finding valid keyStr indexes who stays outside excluders
 			for(Pair<Integer,String> keyStrIndexPair : keyStrIndexes)
@@ -1150,7 +1611,7 @@ public class AddLogsToMethodsAndroid_V2 {
 		
 		for(int i=keyStrIndexes.size()-1; i>=0; i--)
 		{
-			if(keyStrIndexes.get(i) < fromIndex )
+			if(keyStrIndexes.get(i) <= fromIndex )
 			{
 				return keyStrIndexes.get(i);
 			}
@@ -1222,20 +1683,16 @@ public class AddLogsToMethodsAndroid_V2 {
 	
 	public static String createIndentFromLine(String line)
 	{
-		int counter = 0;
-		String indentString = "";
-	    for( int i = 0; i < line.length(); i++)
+		int i = 0;
+		for( ; i < line.length(); i++)
 	    {
-	      if( line.charAt(i) == ' ')
+	      if( line.charAt(i) != ' ' && line.charAt(i) != '\t')
 	      {
-	    	  counter++;
-	    	  indentString += " ";
-	      }
-	      else if(counter > 0) 
 	    	  break;
+	      }
 	    }
-	    
-		return indentString;
+		
+		return line.substring(0,i);
 	}
 	
 	public static boolean mustContainToBeFunction(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
@@ -1300,47 +1757,54 @@ public class AddLogsToMethodsAndroid_V2 {
 		return true;
 	}
 	
-	public static String getFunctionName(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
+	public static Pair<String, LineDetails> getFunctionName(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
 	{
 		String functionName = "";
 		
 		if(fileContent.isEmpty())
-			return "";
+			return null;
 		
 		int currentIndex = getLastValidIndexOf(lineDetails, fileContent, ")");
+		
+		printLogs("elango currentIndex: "+currentIndex);
 		
 		Pair<LineDetails, Integer> matchingPairData = getMatchingPair(lineDetails,fileContent,")", currentIndex);
 		
 		if(matchingPairData == null)
 		{
-			return "";
+			return null;
 		}
+		
+		printLogs("elango matchingPairData.first.line: "+matchingPairData.first.line);
+		printLogs("elango matchingPairData.second: "+matchingPairData.second);
 		
 		int lastNonSpaceIndex = matchingPairData.second;
 		lineDetails = matchingPairData.first;
-		
-		printLogs("getFunctionName 1lastNonSpaceIndex: "+lastNonSpaceIndex);
 		
 		while((--lastNonSpaceIndex) >= 0 && (lineDetails.line.charAt(lastNonSpaceIndex) == ' ' || lineDetails.line.charAt(lastNonSpaceIndex) == '\t'))
 		{
 			//loop till we get a non space char or start of the line
 		}
 		
-		printLogs("getFunctionName 2lastNonSpaceIndex: "+lastNonSpaceIndex);
-		
 		int lastIndexOfSpace = getLastValidIndexOf(lineDetails, fileContent, " ",lastNonSpaceIndex);
-		
-		printLogs("getFunctionName lastIndexOfSpace: "+lastIndexOfSpace);
 		
 		if(lastIndexOfSpace == -1)
 		{
 			lastIndexOfSpace = 0;	
 		}
-
-		functionName = lineDetails.line.substring(lastIndexOfSpace+1, lastNonSpaceIndex+1);
-		printLogs("getFunctionName functionName: "+functionName);
 		
-		return functionName;		
+		if(lastNonSpaceIndex == -1)
+		{
+			lastNonSpaceIndex = lineDetails.line.length()-1;
+		}
+
+		printLogs("elango lastIndexOfSpace: "+lastIndexOfSpace);
+		printLogs("elango lastNonSpaceIndex: "+lastNonSpaceIndex);
+		functionName = lineDetails.line.substring(lastIndexOfSpace+1, lastNonSpaceIndex+1);
+		
+		Pair<String, LineDetails> functionNameInfo = thisObject.new Pair<String, LineDetails>(functionName, lineDetails);
+		
+		return functionNameInfo;		
 	}
 	
 	public static void checkAndAddExitLog(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
@@ -1350,35 +1814,39 @@ public class AddLogsToMethodsAndroid_V2 {
 			return;
 		}
 		
+		if(lineDetails.isEntryLogAdded)
+			return;
+		
 		LineDetails previousLineDetails = null;
 		if(lineDetails.lineNum > 0)
 			previousLineDetails = fileContent.get(lineDetails.lineNum - 1);
 		
 		FunctionData functionData = functionDataStack.peek();
 		
+		printLogs("\ncheckAndAddExitLog lineDetails.line: "+lineDetails.line);
+		
 		if(functionData.openBracesCount > 0)
 		{
 			functionData.openBracesCount += getValidOccurancesCount(lineDetails,fileContent,"{",0);
 			functionData.openBracesCount -= getValidOccurancesCount(lineDetails,fileContent,"}",0);
+			
 			if(functionData.openBracesCount > 0) //function not yet done
 			{
 				//this is for return in between functions, based on some conditions. Or when throw happens
 				if( isLineContainsValidStr(lineDetails, fileContent, "return;") || isLineContainsValidStr(lineDetails, fileContent, "return ") || isLineContainsValidStr(lineDetails, fileContent, "throw ") ) 
 				{
-					if((isLineContainsValidStr(lineDetails, fileContent, "return;") || isLineContainsValidStr(lineDetails, fileContent, "return ") ) 
-							&& !isLineStartsWith(lineDetails, fileContent, "return"))
-					{							
-						int returnStrIndex = getValidIndexOf(lineDetails, fileContent, "return");
-						if(!(lineDetails.line.charAt(returnStrIndex - 1) == ' ' || lineDetails.line.charAt(returnStrIndex - 1) == ' ' 
-								|| lineDetails.line.charAt(returnStrIndex - 1) == '{' || lineDetails.line.charAt(returnStrIndex - 1) == '}' 
-								|| lineDetails.line.charAt(returnStrIndex - 1) == ')'))
-						{
-							return;
-						}
+					int returnStrIndex = getValidIndexOf(lineDetails,fileContent,"return");
+					int nextNonSpaceIndex = getNextNonSpaceValidIndex(lineDetails, fileContent, returnStrIndex+5);
+					int prevNonSpaceIndex = getPrevNonSpaceValidIndex(lineDetails, fileContent, returnStrIndex);
+					
+					if((nextNonSpaceIndex != -1 && nextNonSpaceIndex == returnStrIndex+6 && lineDetails.line.charAt(nextNonSpaceIndex) != ';') || 
+							(prevNonSpaceIndex != -1 && lineDetails.line.charAt(prevNonSpaceIndex) != '{')) //return word is part of some other identifier
+					{
+						return;
 					}
 					
-					printLogs("\n--\nExit log is added, in between function\n--\n");
-					lineDetails.lineToInsertAfter.add(getExitLogStr(functionData.functionName));
+					printLogs("\n==================== Exit log is added == in between function ======================\n");
+					lineDetails.lineToInsertBefore.add(createIndentFromLine(lineDetails.line) + getExitLogStr(functionData.functionName));
 					
 					if(getValidOccurancesCount(lineDetails, fileContent, "return ") != 0)
 					{
@@ -1386,28 +1854,49 @@ public class AddLogsToMethodsAndroid_V2 {
 					}
 					
 				}
+				
+				for(int i=0;i<lineDetails.lineToInsertAfter.size();i++)
+				{
+					String lineToAddAfter = lineDetails.lineToInsertAfter.get(i);
+					if(lineToAddAfter.trim().startsWith("return;") || lineToAddAfter.trim().startsWith("return ") || lineToAddAfter.trim().startsWith("throw ")) 
+					{
+						printLogs("\n==================== Exit log is added == in between function, inside lineToInsertAfter ======================\n");
+						
+						lineDetails.lineToInsertAfter.add(i, createIndentFromLine(lineToAddAfter) + getExitLogStr(functionData.functionName));
+						
+						if(!lineToAddAfter.trim().startsWith("throw "))
+							functionData.isFunctionReturnAnything = true;
+						
+						i++;
+					}
+				}
 			}
 			
-			printLogs("\ncheckAndAddExitLog: line: "+lineDetails.line);
-			if(previousLineDetails!=null)
+			/*if(previousLineDetails!=null)
 				printLogs("checkAndAddExitLog: previousLine: "+previousLineDetails.line);
-			printLogs("checkAndAddExitLog: openBracesCount: "+functionData.openBracesCount + "\n");
+			printLogs("checkAndAddExitLog: openBracesCount: "+functionData.openBracesCount + "\n");*/
 			if(functionData.openBracesCount == 0) //last closing brace met for the function, so function is done
 			{
+				lineDetails.functionData = null;
+				printLogs("openBracesCount become 0, so made functiondata null in line: "+lineDetails.line);
+				
 				printLogs("checkAndAddExitLog wasLastStmtSwitch: "+functionData.wasLastStmtSwitch);
 				
 				if( !isLineContainsValidStr(previousLineDetails,fileContent, "return;") && !isLineContainsValidStr(previousLineDetails,fileContent, "return ")   //dont add exit log after the return statement
 						&& !isLineContainsValidStr(previousLineDetails,fileContent, "throw ") //dont add exit log if the function throws at last line
 						&& !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
 						&& !functionData.isFunctionReturnAnything //dont add exit log if the function must return something
-						&& !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
-						&& !functionData.wasLastStmtSwitch)  //dont add exit log if the function has switch and doesn't not break
+						&& !functionData.wasLastStmtSwitch  //dont add exit log if the function has switch and doesn't not break
+						&& !functionData.isAlwaysExpThrownOut)
 				{
-					printLogs("\n--\nExit log is added, at the end of the function\n--\n");
-					lineDetails.lineToInsertAfter.add(getExitLogStr(functionData.functionName));
+					printLogs("\n===================== Exit log is added, at the end of the function==========================\n");
+					
+					lineDetails.lineToInsertBefore.add(createIndentFromLine(lineDetails.line) + "    " + getExitLogStr(functionData.functionName));
 				}
 				
-				functionDataStack.pop();
+				FunctionData tempFunctionData = functionDataStack.pop();
+				
+				printLogs("openBracesCount become 0, so popped function: '"+tempFunctionData.functionName+"' from function data stack");
 			}
 		}
 	}
