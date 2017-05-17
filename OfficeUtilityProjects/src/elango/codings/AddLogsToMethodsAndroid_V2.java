@@ -26,6 +26,7 @@ public class AddLogsToMethodsAndroid_V2 {
 	public static final String[] validMatcherStringsArr = {};
 	public static final String[] validEndMatcherStringsArr = {") {" , "){", ")" };
 	public static final String[] nonValidMatcherStringsArr = {";","=","new ","\"","+","?","@"};
+	public static final String[] nonValidEndMatcherStringsArr = {"{}","{ }"};
 	public static final String[] condStmtMatcherStringsArr = {"if (","if(","while (","while(","for (","for(",
 			"switch (","switch(","catch","synchronized"};
 	
@@ -625,17 +626,16 @@ public class AddLogsToMethodsAndroid_V2 {
 		if(keyStrIndex >= 0 && keyStrIndex - 1 == getPrevNonSpaceValidIndex(lineDetails, fileContent, keyStrIndex))
 			return;
 		
-		printLogs("checkAndModifyConditionalStmts it is if whole word");
-		
 		if(keyStrIndex < lineDetails.line.length() -1  && keyStrIndex + 1 == getNextNonSpaceValidIndex(lineDetails, fileContent, keyStrIndex + keyStr.length() - 1))
 			return;	
 		
-		printLogs("checkAndModifyConditionalStmts it is if whole word");
+		//ignore single line if stmts having try stmts, very difficult to parse it
+		if(isLineContainsValidStr(lineDetails, fileContent, "try"))
+			return;
 		
 		int openBracketIndex = getValidIndexOf(lineDetails, fileContent, "(", keyStrIndex+1);
 		if(openBracketIndex == -1)
 			return;
-		
 		
 		Pair<LineDetails, Integer> closeBracketDetails = getMatchingPair(lineDetails, fileContent, "(", openBracketIndex);
 		
@@ -668,26 +668,45 @@ public class AddLogsToMethodsAndroid_V2 {
 				closeBracketDetails.first.isConditionStmt = true;
 				
 				LineDetails tempLineDetails = closeBracketDetails.first;
+				int condCloseBracketIndex = closeBracketDetails.second;
 				
 				String tempLine = tempLineDetails.line;
 				String spaces = createIndentFromLine(tempLine);
 				
-				closeBracketDetails.first.lineToInsertAfter.add(spaces+"{");
-				closeBracketDetails.first.lineToInsertAfter.add(spaces + "    " +tempLine.substring(closeBracketDetails.second+1));
-				
 				printLogs("elango tempLineDetails.line"+tempLineDetails.line);
-				printLogs("elango isLineEndsWith "+isLineEndsWith(tempLineDetails, fileContent, ";"));
 				
-				while(!isLineEndsWith(tempLineDetails, fileContent, ";"))
+				tempLineDetails.lineToInsertAfter.add(spaces+"{");
+				if(!isLineContainsValidStr(tempLineDetails, fileContent, ";"))
+				{
+					tempLineDetails.lineToInsertAfter.add(spaces + "    " +tempLine.substring(condCloseBracketIndex+1));
+				}
+				else
+				{
+					int colonStrIndex = getValidIndexOf(tempLineDetails, fileContent, ";");
+					tempLineDetails.lineToInsertAfter.add(spaces + "    " +tempLineDetails.line.substring(condCloseBracketIndex+1, colonStrIndex + 1));
+				}
+				
+				printLogs("1 elango is line contains ; "+isLineContainsValidStr(tempLineDetails, fileContent, ";") );
+				
+				while(!isLineContainsValidStr(tempLineDetails, fileContent, ";"))
 				{
 					if(tempLineDetails.lineNum > fileContent.size() - 1)
 						break;
-					
 					tempLineDetails = fileContent.get(tempLineDetails.lineNum + 1);
+					
+					printLogs("2 elango is line contains ; "+isLineContainsValidStr(tempLineDetails, fileContent, ";") );
 				}
 				
 				tempLineDetails.lineToInsertAfter.add(spaces+"}");
 				
+				if(!isLineEndsWith(tempLineDetails, fileContent, ";"))
+				{
+					int colonStrIndex = getValidIndexOf(tempLineDetails, fileContent, ";");
+					tempLineDetails.lineToInsertAfter.add(spaces + "    " +tempLineDetails.line.substring(colonStrIndex + 1));
+					if(tempLineDetails.lineNum != closeBracketDetails.first.lineNum)
+						tempLineDetails.line = tempLineDetails.line.substring(0,colonStrIndex+1);
+				}	
+						
 				closeBracketDetails.first.line = tempLine.substring(0, closeBracketDetails.second+1 );
 				
 				printLogs("elango added close bracket");
@@ -710,11 +729,10 @@ public class AddLogsToMethodsAndroid_V2 {
 					
 					printLogs("2 nextLine: "+nextLine.line);
 					
-					while(!isLineEndsWith(nextLine, fileContent, ";")) //go till the stmt finishes
+					while(!isLineContainsValidStr(nextLine, fileContent, ";")) //go till the stmt contains ;
 					{
 						if(nextLine.lineNum > fileContent.size() - 1)
 							break;
-						
 						nextLine = fileContent.get(nextLine.lineNum + 1);
 					}
 					
@@ -722,11 +740,21 @@ public class AddLogsToMethodsAndroid_V2 {
 					
 					if(!isLineStartsWith(startLine, fileContent, "{"))
 					{
-						closeBracketDetails.first.isConditionStmt = true;
+						nextLine.isConditionStmt = true;
+						startLine.isConditionStmt = true;
 						String spaces = createIndentFromLine(lineDetails.line);
 						startLine.lineToInsertBefore.add(spaces+"{");
-						nextLine.lineToInsertAfter.add(spaces+"}");
-						startLine.isConditionStmt = true;
+						
+						if(!isLineEndsWith(nextLine, fileContent, ";")) //if ; comes in between line. mean if cond finished there.
+						{
+							int colonStrIndex = getValidIndexOf(nextLine, fileContent, ";");
+							nextLine.lineToInsertAfter.add(spaces+"}");
+							nextLine.lineToInsertAfter.add(spaces + "    " +nextLine.line.substring(colonStrIndex + 1));
+							nextLine.line = nextLine.line.substring(0,colonStrIndex+1);
+						}	
+						else
+							nextLine.lineToInsertAfter.add(spaces+"}");
+						
 					}
 				}
 			}
@@ -889,9 +917,9 @@ public class AddLogsToMethodsAndroid_V2 {
 		printLogs("mustNotContainToBeFunction(lineDetails, fileContentOriginal): "+mustNotContainToBeFunction(lineDetails, fileContentOriginal));
 		printLogs("mustNotContainCondToBeFunction(lineDetails, fileContentOriginal): "+mustNotContainCondToBeFunction(lineDetails, fileContentOriginal));*/
 		
-		if(mustContainToBeFunction(lineDetails, fileContentOriginal) && mustEndWithToBeFunction(lineDetails, fileContentOriginal)
+		if((mustContainToBeFunction(lineDetails, fileContentOriginal) && mustEndWithToBeFunction(lineDetails, fileContentOriginal)
 				&& mustNotContainToBeFunction(lineDetails, fileContentOriginal) && mustNotContainCondToBeFunction(lineDetails, fileContentOriginal)
-				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "throws "))
+				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "throws ") ) && mustNotEndWithToBeFunction(lineDetails, fileContentOriginal))
 		{		
 			LineDetails openBraceLineDetails = lineDetails;
 			
@@ -932,7 +960,7 @@ public class AddLogsToMethodsAndroid_V2 {
 			{
 				if(lineDetails.isEntryLogAdded)
 					return lineDetails;
-								
+				
 				if(lineDetails.line.endsWith(";"))
 					return lineDetails;
 				
@@ -1285,7 +1313,7 @@ public class AddLogsToMethodsAndroid_V2 {
 			Pair<Integer,String> indexOfExluderPairPrev = null;
 			while (iter.hasNext())  //DO NOT CHANGE THE ORDER OF THESE CONDITIONS
 			{
-				if(previousLineDetails != null && previousLineDetails.multiLineCommentOpen) 
+				if(previousLineDetails != null && previousLineDetails.multiLineCommentOpen) //skip comment lines
 				{
 					while(iter.hasNext() && !iter.next().second.equals("*/"))
 			    	{
@@ -1299,7 +1327,7 @@ public class AddLogsToMethodsAndroid_V2 {
 					
 					if(!keyStr.equals("\"") && indexOfExluderPairPrev != null)
 					{
-						if(indexOfExluderPairPrev.second.equals(indexOfExluderPair.second))
+						if(!indexOfExluderPairPrev.second.equals("\"") && indexOfExluderPairPrev.second.equals(indexOfExluderPair.second))
 						{
 							iter.remove();
 							break;
@@ -1741,6 +1769,24 @@ public class AddLogsToMethodsAndroid_V2 {
 		
 		return true;
 	}
+	
+	public static boolean mustNotEndWithToBeFunction(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
+	{
+		if(nonValidEndMatcherStringsArr.length == 0)
+			return true;
+		
+		for (String nonVaildEndMatcher : nonValidEndMatcherStringsArr)
+		{
+			if(isLineEndsWith(lineDetails, fileContent, nonVaildEndMatcher))
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	
 	
 	public static boolean mustNotContainCondToBeFunction(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
 	{
