@@ -3,10 +3,12 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 
+import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
+
 public class AddLogsToMethodsAndroid_V2 {
 	
-	private static int testLocalFiles = 1;
-	private static int enableLogs = 1;
+	private static int testLocalFiles = 0;
+	private static int enableLogs = 0;
 	
 	//public static String LOGGER_TYPE_STR = "Log.w";
 	public static String LOGGER_TYPE_STR = "Slog.w";
@@ -20,12 +22,14 @@ public class AddLogsToMethodsAndroid_V2 {
 	/*public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/",
 			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view"
 			};*/
-	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/java/com/android/server",
+			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view/inputmethod"};
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
 	public static final String[] validMatcherStringsArr = {};
 	public static final String[] validEndMatcherStringsArr = {") {" , "){", ")" };
-	public static final String[] nonValidMatcherStringsArr = {";","=","new ","\"","+","?","@"};
+	public static final String[] nonValidMatcherStringsArr = {";","=","new ","\"","+","?","@",":","."};
 	public static final String[] nonValidEndMatcherStringsArr = {"{}","{ }"};
 	public static final String[] condStmtMatcherStringsArr = {"if (","if(","while (","while(","for (","for(",
 			"switch (","switch(","catch","synchronized"};
@@ -86,6 +90,8 @@ public class AddLogsToMethodsAndroid_V2 {
 			printLogs("LineDetails.lineToInsertBefore: "+lineToInsertBefore);
 			printLogs("LineDetails.lineToInsertAfter: "+lineToInsertAfter);
 			printLogs("LineDetails.className: "+className);
+			printLogs("LineDetails.isEntryLogAdded: "+isEntryLogAdded);
+			printLogs("LineDetails.isExitLogAdded: "+isExitLogAdded);
 			if(functionData != null)
 				functionData.print();
 		}
@@ -641,7 +647,16 @@ public class AddLogsToMethodsAndroid_V2 {
 		
 		if(closeBracketDetails != null)
 		{
-			lineDetails.isConditionStmt = true;
+			LineDetails tempLineDetails = lineDetails;
+			while(tempLineDetails.lineNum <= closeBracketDetails.first.lineNum)
+			{
+				tempLineDetails.isConditionStmt = true;
+				
+				if(tempLineDetails.lineNum < fileContent.size() - 1)
+					tempLineDetails = fileContent.get(tempLineDetails.lineNum+1);
+				else
+					break;
+			}
 			
 			printLogs("elango closeBracketDetails.first.line: "+closeBracketDetails.first.line);
 			printLogs("elango closeBracketDetails.second: "+closeBracketDetails.second);
@@ -667,7 +682,7 @@ public class AddLogsToMethodsAndroid_V2 {
 			{
 				closeBracketDetails.first.isConditionStmt = true;
 				
-				LineDetails tempLineDetails = closeBracketDetails.first;
+				tempLineDetails = closeBracketDetails.first;
 				int condCloseBracketIndex = closeBracketDetails.second;
 				
 				String tempLine = tempLineDetails.line;
@@ -858,6 +873,9 @@ public class AddLogsToMethodsAndroid_V2 {
 			return lineDetails;
 		}
 		
+		if(isLineStartsWith(lineDetails, fileContentOriginal, "package "))
+			lineDetails.lineToInsertAfter.add("import "+IMPORT_FOR_LOGGER+";");
+		
 		if(isLineContainsValidStr(lineDetails, fileContentOriginal, "DEBUG = false") 
 				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "DEBUG =false") 
 				|| isLineContainsValidStr(lineDetails, fileContentOriginal, "DEBUG= false") 
@@ -1020,9 +1038,22 @@ public class AddLogsToMethodsAndroid_V2 {
 			if(openBraceLineDetails.lineNum + 1 < fileContentOriginal.size())
 			{
 				LineDetails nextLineDetails =  fileContentOriginal.get(openBraceLineDetails.lineNum + 1 );
-				if(isLineContainsValidStr(nextLineDetails, fileContentOriginal, "super") || isLineContainsValidStr(nextLineDetails, fileContentOriginal, "this")
-						&& !isLineStartsWith(nextLineDetails, fileContentOriginal, "this."))
+				
+				while( nextLineDetails.onlyCommentLine && nextLineDetails.lineNum < fileContentOriginal.size() - 1) //skip if any comment lines
 				{
+					nextLineDetails = fileContentOriginal.get(nextLineDetails.lineNum+1);
+				}
+				
+				if( isLineStartsWith(nextLineDetails, fileContentOriginal, "super") ||
+						((isLineContainsValidStr(nextLineDetails, fileContentOriginal, "super") || isLineContainsValidStr(nextLineDetails, fileContentOriginal, "this"))
+						&& (!isLineStartsWith(nextLineDetails, fileContentOriginal, "this.") 
+							&& !isLineContainsValidStr(nextLineDetails, fileContentOriginal, "this)") 
+							&& !isLineContainsValidStr(nextLineDetails, fileContentOriginal, "this,") 
+							&& !(isLineContainsValidStr(nextLineDetails, fileContentOriginal, "return") && isLineContainsValidStr(nextLineDetails, fileContentOriginal, "super"))
+							&& !(isLineContainsValidStr(nextLineDetails, fileContentOriginal, "return") && isLineContainsValidStr(nextLineDetails, fileContentOriginal, "this")) 
+							&& !(isLineContainsValidStr(nextLineDetails, fileContentOriginal, "synchronized") && isLineContainsValidStr(nextLineDetails, fileContentOriginal, "this")))))
+				{
+					
 					while(!isLineEndsWith(nextLineDetails, fileContentOriginal, ";"))
 					{
 						if(nextLineDetails.lineNum > fileContentOriginal.size() - 1)
@@ -1265,6 +1296,9 @@ public class AddLogsToMethodsAndroid_V2 {
 	public static ArrayList<Integer> getIndexesOutMultiLineCmntQuotes(LineDetails lineDetails, ArrayList<LineDetails> fileContent, String keyStr)
 	{
 		ArrayList<Integer> resultedKeyStrIndexes = new ArrayList<Integer>();
+		
+		if(lineDetails == null)
+			return resultedKeyStrIndexes;
 		
 		String line = lineDetails.line;
 		
@@ -1879,7 +1913,9 @@ public class AddLogsToMethodsAndroid_V2 {
 			if(functionData.openBracesCount > 0) //function not yet done
 			{
 				//this is for return in between functions, based on some conditions. Or when throw happens
-				if( isLineContainsValidStr(lineDetails, fileContent, "return;") || isLineContainsValidStr(lineDetails, fileContent, "return ") || isLineContainsValidStr(lineDetails, fileContent, "throw ") ) 
+				if( isLineContainsValidStr(lineDetails, fileContent, "return;") || isLineContainsValidStr(lineDetails, fileContent, "return ") 
+						|| isLineContainsValidStr(lineDetails, fileContent, "throw ") 
+						|| lineDetails.line.trim().equals("return") ) 
 				{
 					int returnStrIndex = getValidIndexOf(lineDetails,fileContent,"return");
 					int nextNonSpaceIndex = getNextNonSpaceValidIndex(lineDetails, fileContent, returnStrIndex+5);
@@ -1904,7 +1940,8 @@ public class AddLogsToMethodsAndroid_V2 {
 				for(int i=0;i<lineDetails.lineToInsertAfter.size();i++)
 				{
 					String lineToAddAfter = lineDetails.lineToInsertAfter.get(i);
-					if(lineToAddAfter.trim().startsWith("return;") || lineToAddAfter.trim().startsWith("return ") || lineToAddAfter.trim().startsWith("throw ")) 
+					if(lineToAddAfter.trim().startsWith("return;") || lineToAddAfter.trim().startsWith("return ") || lineToAddAfter.trim().startsWith("throw ")
+							|| lineDetails.line.trim().equals("return")) 
 					{
 						printLogs("\n==================== Exit log is added == in between function, inside lineToInsertAfter ======================\n");
 						
@@ -1923,28 +1960,104 @@ public class AddLogsToMethodsAndroid_V2 {
 			printLogs("checkAndAddExitLog: openBracesCount: "+functionData.openBracesCount + "\n");*/
 			if(functionData.openBracesCount == 0) //last closing brace met for the function, so function is done
 			{
+				FunctionData tempFunctionData = functionDataStack.pop();
+				printLogs("openBracesCount become 0, so popped function: '"+tempFunctionData.functionName+"' from function data stack");
+				
 				lineDetails.functionData = null;
 				printLogs("openBracesCount become 0, so made functiondata null in line: "+lineDetails.line);
 				
+				//TODO add to go till last throw or return
+				
 				printLogs("checkAndAddExitLog wasLastStmtSwitch: "+functionData.wasLastStmtSwitch);
 				
-				if( !isLineContainsValidStr(previousLineDetails,fileContent, "return;") && !isLineContainsValidStr(previousLineDetails,fileContent, "return ")   //dont add exit log after the return statement
-						&& !isLineContainsValidStr(previousLineDetails,fileContent, "throw ") //dont add exit log if the function throws at last line
-						&& !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
-						&& !functionData.isFunctionReturnAnything //dont add exit log if the function must return something
-						&& !functionData.wasLastStmtSwitch  //dont add exit log if the function has switch and doesn't not break
-						&& !functionData.isAlwaysExpThrownOut)
+				ArrayList<LineDetails> fullStatementLines = getFullStatement(previousLineDetails, fileContent);
+				
+				boolean isValidEndOfFunction = true;
+				
+				for(LineDetails fullStatementLine : fullStatementLines)
+				{
+					if(!isValidLastFunctionLine(fullStatementLine, fileContent, functionData))
+					{
+						isValidEndOfFunction = false;
+						break;
+					}
+				}
+				
+				if(!isValidLastFunctionLine(previousLineDetails, fileContent, functionData)) 
+				{
+					isValidEndOfFunction = false;
+				}
+				
+				if(isValidEndOfFunction) 
 				{
 					printLogs("\n===================== Exit log is added, at the end of the function==========================\n");
 					
 					lineDetails.lineToInsertBefore.add(createIndentFromLine(lineDetails.line) + "    " + getExitLogStr(functionData.functionName));
 				}
 				
-				FunctionData tempFunctionData = functionDataStack.pop();
-				
-				printLogs("openBracesCount become 0, so popped function: '"+tempFunctionData.functionName+"' from function data stack");
 			}
 		}
+	}
+	
+	public static boolean isValidLastFunctionLine(LineDetails lineDetails, ArrayList<LineDetails> fileContent,FunctionData functionData)
+	{
+		if( !isLineContainsValidStr(lineDetails,fileContent, "return;") 
+				&& !isLineContainsValidStr(lineDetails,fileContent, "return ")   //dont add exit log after the return statement
+				&& !isLineContainsValidStr(lineDetails,fileContent, "throw ") //dont add exit log if the function throws at last line
+				&& !functionData.isInfiniteLoop //dont add exit log if the function has infinite loop
+				&& !functionData.isFunctionReturnAnything //dont add exit log if the function must return something
+				&& !functionData.wasLastStmtSwitch  //dont add exit log if the function has switch and doesn't not break
+				&& !functionData.isAlwaysExpThrownOut
+				&& !lineDetails.line.trim().equals("return"))
+		{
+			return true;
+		}
+		return false;
+	}
+		
+	public static ArrayList<LineDetails> getFullStatement(LineDetails lineDetails, ArrayList<LineDetails> fileContent)
+	{
+		if(lineDetails == null)
+			return null;
+		
+		printLogs("getFullStatement starts");
+		
+		ArrayList<LineDetails> fullStatementLines = new ArrayList<LineDetails>();
+		
+		fullStatementLines.add(lineDetails);
+		
+		printLogs("added line to fullStatementLines: "+lineDetails.line);
+		
+		if(lineDetails.lineNum > 0)
+		{
+			do
+			{
+				lineDetails = fileContent.get(lineDetails.lineNum-1);
+				
+				if(isLineContainsValidStr(lineDetails, fileContent, ";") 
+						|| lineDetails.isEntryLogAdded 
+						|| lineDetails.isExitLogAdded)
+					break;
+				
+				if(isLineContainsValidStr(lineDetails, fileContent, "throw") || isLineContainsValidStr(lineDetails, fileContent, "return"))
+				{
+					fullStatementLines.add(lineDetails);
+					printLogs("added line to fullStatementLines: "+lineDetails.line);
+					break;
+				}
+				
+				fullStatementLines.add(lineDetails);
+				printLogs("added line to fullStatementLines: "+lineDetails.line);
+				
+			}while(lineDetails.lineNum > 0);
+			
+		}
+		
+		Collections.reverse(fullStatementLines);
+		
+		printLogs("\n\n !!!!!!!!!!!! fullStatementLines: "+fullStatementLines);
+		
+		return fullStatementLines;
 	}
 	
 	public static boolean isLineContainsValidStr(LineDetails lineDetails, ArrayList<LineDetails> fileContent, String keyStr)
