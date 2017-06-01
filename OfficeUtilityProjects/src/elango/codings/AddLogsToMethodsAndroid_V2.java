@@ -16,16 +16,19 @@ public class AddLogsToMethodsAndroid_V2 {
 	//public static String IMPORT_FOR_LOGGER = "android.util.Log";
 	public static String IMPORT_FOR_LOGGER = "android.util.Slog";
 	
-	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\frameworks\\base\\services\\java","Z:\\workspace\\ROW_MY18\\frameworks\\base\\core\\java"};
-	//public static final String[] PATHS_TO_ADD_LOGS = {"Z:\\workspace\\ROW_MY18\\packages\\inputmethods\\LatinIME\\java\\src\\com\\android\\inputmethod\\annotations"};
-	//public static final String[] PATHS_TO_ADD_LOGS = {"/home/emanickam/workspace/ROW_MY18/packages/inputmethods/LatinIME/java"};
-	/*public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/",
-			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view"
-			};*/
-	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/core/java/com/android/server/"};
-	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services/java/com/android/server",
-			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view/inputmethod"};
+	//====== From here combine for fresh setup =============
+	
+	/*public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services",
+			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/os/SystemService.java",
+			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/"};*/
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view/inputmethod/"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/InputMethodSubtypeSwitchingController.java"};
+
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
+	
+	public static final String[] VALID_FILE_SHOULD_CONTAINS = {"input","systemserver"};
+	public static final String[] VALID_FILE_SHOULD_NOT_CONTAINS = {"test"};
+	public static final String[] VALID_FILE_SHOULD_END_WITH = {".java"};
 	
 	public static final String[] validMatcherStringsArr = {};
 	public static final String[] validEndMatcherStringsArr = {") {" , "){", ")" };
@@ -140,7 +143,10 @@ public class AddLogsToMethodsAndroid_V2 {
 		for (String pathStr : pathArrToAddLogs)
 		{
 			File path = new File(pathStr);
-			countFilesInPath(path,".java");
+			if(path.exists())
+				countFilesInPath(path,true);
+			else
+				System.out.println("countFilesInPath : path does not exist, path: "+path);
 		}
 		
 		printLogs("Total files count to be processed: "+totalFilesToProcess,true);
@@ -148,18 +154,102 @@ public class AddLogsToMethodsAndroid_V2 {
 		for (String pathStr : pathArrToAddLogs)
 		{
 			File path = new File(pathStr);
-			processFiles(path);
+			if(path.exists())
+				processFiles(path,true);
+			else
+				System.out.println("processFilespath does not exist, path: "+path);
 		}
 		
 	}
 	
-	public static void addLogsToFile(File file)
+	public static void countFilesInPath(File path, boolean fromPathArray) 
+	{
+		if(path.isDirectory())
+		{
+			File[] files = path.listFiles();
+			for (File file : files) 
+			{
+				if (file.isDirectory()) 
+				{
+					countFilesInPath(file, false);
+				} 
+				else 
+				{
+					if(isValidFile(file, false))
+					{
+						totalFilesToProcess++; 
+					}
+				}
+			}
+		}
+		else
+		{
+			if(isValidFile(path, fromPathArray))
+			{
+				totalFilesToProcess++; 
+			}
+		}
+	}
+	
+	public static boolean isValidFile(File file, boolean fromPathArray)
+	{
+		if(fromPathArray == true)
+			return true;
+		
+		boolean isFileEndsAsExpected = false;
+		boolean isFileContainsExpected = false;
+		
+		String filename = file.getName().trim().toLowerCase();
+		String fileAbsolutePath = file.getAbsolutePath().trim().toLowerCase();
+		
+		for (String validFileNotToContain : VALID_FILE_SHOULD_NOT_CONTAINS)
+		{
+			if(fileAbsolutePath.contains(validFileNotToContain))
+			{
+				return false;
+			}
+		}
+		
+		if(VALID_FILE_SHOULD_END_WITH.length == 0)
+			isFileEndsAsExpected = true;
+		
+		for (String validFileEndsWith : VALID_FILE_SHOULD_END_WITH)
+		{
+			if(filename.endsWith(validFileEndsWith))
+			{
+				isFileEndsAsExpected = true;
+				break;
+			}
+		}
+		
+		if(VALID_FILE_SHOULD_END_WITH.length == 0)
+			isFileEndsAsExpected = true;
+		
+		for (String validFileContains : VALID_FILE_SHOULD_CONTAINS)
+		{
+			if(filename.contains(validFileContains))
+			{
+				isFileContainsExpected = true;
+				break;
+			}
+		}
+		
+		if(VALID_FILE_SHOULD_CONTAINS.length == 0)
+			isFileContainsExpected = true;
+		
+		/*printLogs("filename: "+filename,true);
+		printLogs("isFileEndsAsExpected: "+isFileEndsAsExpected+" isFileContainsExpected: "+isFileContainsExpected,true);*/
+		
+		return (isFileEndsAsExpected && isFileContainsExpected) ;
+	}
+	
+	public static void addLogsToFile(File file,boolean fromPathArray)
 	{
 		String filename = file.getName();
-		if(filename.endsWith(".java"))
+		if(isValidFile(file, fromPathArray))
 		{
 			filesProcessedCount++;
-			printLogs("Processing "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+filename,true);
+			printLogs("Processing "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+file.getAbsolutePath(),true);
 			
 			ArrayList<LineDetails> fileContentOriginal = new ArrayList<LineDetails>();
 			ArrayList<LineDetails> fileContentModified = new ArrayList<LineDetails>();
@@ -174,7 +264,7 @@ public class AddLogsToMethodsAndroid_V2 {
 			
 			rewriteFile(file,fileContentModified); 
 			
-			printLogs("Processed "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+filename,true);
+			printLogs("Processed "+filesProcessedCount + " files of "+totalFilesToProcess+", file name: "+file.getAbsolutePath(),true);
 		}					
 	}
 	
@@ -915,7 +1005,9 @@ public class AddLogsToMethodsAndroid_V2 {
 			}
 		}
 		
-		if(lineDetails.className.isEmpty() && line.contains("class "+className+" ") || line.endsWith("class "+className) || line.contains("class "+className+"<"))
+		if(lineDetails.className.isEmpty() &&
+				(line.contains("class "+className+" ") || line.endsWith("class "+className) || line.contains("class "+className+"<")) ||
+				(line.contains("interface "+className+" ") || line.endsWith("interface "+className) || line.contains("interface "+className+"<")) )
 		{
 			ListIterator<LineDetails> tempIter = fileContentOriginal.listIterator();
 			LineDetails tempLineDetails = lineDetails;
@@ -1490,37 +1582,6 @@ public class AddLogsToMethodsAndroid_V2 {
 		printLogsNoNewLine(logMsg, enableLogs == 1);
 	}
 	
-	public static void countFilesInPath(File path, String extension) 
-	{
-		String filename = path.getName();
-		if(path.isDirectory())
-		{
-			File[] files = path.listFiles();
-			for (File file : files) 
-			{
-				if (file.isDirectory()) 
-				{
-					countFilesInPath(file,extension);
-				} 
-				else 
-				{
-					filename = file.getName();
-					if(filename.endsWith(extension))
-					{
-						totalFilesToProcess++; 
-					}
-				}
-			}
-		}
-		else
-		{
-			if(filename.endsWith(extension))
-			{
-				totalFilesToProcess++; 
-			}
-		}
-	}
-	
 	public static String getProjectDirectory() {
 		String projectDir = "D:\\";
 		try {
@@ -1534,7 +1595,7 @@ public class AddLogsToMethodsAndroid_V2 {
 		return projectDir;
 	}
 
-	public static void processFiles(File path) {
+	public static void processFiles(File path, boolean fromPathArray) {
 		try
 		{
 			if(path.isDirectory())
@@ -1543,16 +1604,16 @@ public class AddLogsToMethodsAndroid_V2 {
 				File[] files = path.listFiles();
 				for (File file : files) {
 					if (file.isDirectory()) {
-						processFiles(file);
+						processFiles(file,false);
 					} else {
-						addLogsToFile(file);
+						addLogsToFile(file,false);
 					}
 				}
 				printLogs("Completed files from directory and its subdirectories : " + path.getCanonicalPath());
 			}
 			else
 			{
-				addLogsToFile(path);
+				addLogsToFile(path,fromPathArray);
 			}
 		}
 		catch(Exception e)
@@ -1927,8 +1988,14 @@ public class AddLogsToMethodsAndroid_V2 {
 						return;
 					}
 					
+					String exitExtraMetaData = "";
+					if(isLineContainsValidStr(lineDetails, fileContent, "return"))
+						exitExtraMetaData = "(reason: return) ";
+					else if (isLineContainsValidStr(lineDetails, fileContent, "throw"))
+						exitExtraMetaData = "(reason: throw) ";
+					
 					printLogs("\n==================== Exit log is added == in between function ======================\n");
-					lineDetails.lineToInsertBefore.add(createIndentFromLine(lineDetails.line) + getExitLogStr(functionData.functionName));
+					lineDetails.lineToInsertBefore.add(createIndentFromLine(lineDetails.line) + getExitLogStr(exitExtraMetaData+functionData.functionName));
 					
 					if(getValidOccurancesCount(lineDetails, fileContent, "return ") != 0)
 					{
@@ -1940,12 +2007,19 @@ public class AddLogsToMethodsAndroid_V2 {
 				for(int i=0;i<lineDetails.lineToInsertAfter.size();i++)
 				{
 					String lineToAddAfter = lineDetails.lineToInsertAfter.get(i);
+					
+					String exitExtraMetaData = "";
+					if(lineToAddAfter.trim().contains("return"))
+						exitExtraMetaData = "(reason: return) ";
+					else if (lineToAddAfter.trim().contains("throw"))
+						exitExtraMetaData = "(reason: throw) ";
+					
 					if(lineToAddAfter.trim().startsWith("return;") || lineToAddAfter.trim().startsWith("return ") || lineToAddAfter.trim().startsWith("throw ")
 							|| lineDetails.line.trim().equals("return")) 
 					{
 						printLogs("\n==================== Exit log is added == in between function, inside lineToInsertAfter ======================\n");
 						
-						lineDetails.lineToInsertAfter.add(i, createIndentFromLine(lineToAddAfter) + getExitLogStr(functionData.functionName));
+						lineDetails.lineToInsertAfter.add(i, createIndentFromLine(lineToAddAfter) + getExitLogStr(exitExtraMetaData+functionData.functionName));
 						
 						if(!lineToAddAfter.trim().startsWith("throw "))
 							functionData.isFunctionReturnAnything = true;
