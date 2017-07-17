@@ -10,11 +10,11 @@ public class AddLogsToMethodsAndroid_V2 {
 	private static int testLocalFiles = 0;
 	private static int enableLogs = 0;
 	
-	//public static String LOGGER_TYPE_STR = "Log.w";
-	public static String LOGGER_TYPE_STR = "Slog.w";
+	public static String LOGGER_TYPE_STR = "Log.w";
+	//public static String LOGGER_TYPE_STR = "Slog.w";
 	
-	//public static String IMPORT_FOR_LOGGER = "android.util.Log";
-	public static String IMPORT_FOR_LOGGER = "android.util.Slog";
+	public static String IMPORT_FOR_LOGGER = "android.util.Log";
+	//public static String IMPORT_FOR_LOGGER = "android.util.Slog";
 	
 	//====== From here combine for fresh setup =============
 	
@@ -22,11 +22,12 @@ public class AddLogsToMethodsAndroid_V2 {
 			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/os/SystemService.java",
 			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/"};*/
 	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view/inputmethod/"};
-	public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/InputMethodSubtypeSwitchingController.java"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/InputMethodSubtypeSwitchingController.java"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"/home/emanickam/workspace/ROW_MY18/packages/inputmethods/LatinIME/java"};
 
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
-	public static final String[] VALID_FILE_SHOULD_CONTAINS = {"input","systemserver"};
+	public static final String[] VALID_FILE_SHOULD_CONTAINS = {"input","systemserver","*"};
 	public static final String[] VALID_FILE_SHOULD_NOT_CONTAINS = {"test"};
 	public static final String[] VALID_FILE_SHOULD_END_WITH = {".java"};
 	
@@ -225,22 +226,40 @@ public class AddLogsToMethodsAndroid_V2 {
 		if(VALID_FILE_SHOULD_END_WITH.length == 0)
 			isFileEndsAsExpected = true;
 		
-		for (String validFileContains : VALID_FILE_SHOULD_CONTAINS)
-		{
-			if(filename.contains(validFileContains))
-			{
-				isFileContainsExpected = true;
-				break;
-			}
-		}
-		
 		if(VALID_FILE_SHOULD_CONTAINS.length == 0)
 			isFileContainsExpected = true;
+		else if(isArrayContains(VALID_FILE_SHOULD_CONTAINS, "*"))
+		{
+			isFileContainsExpected = true;
+		}
+		else
+		{
+			for (String validFileContains : VALID_FILE_SHOULD_CONTAINS)
+			{
+				if(filename.contains(validFileContains))
+				{
+					isFileContainsExpected = true;
+					break;
+				}
+			}
+		}
 		
 		/*printLogs("filename: "+filename,true);
 		printLogs("isFileEndsAsExpected: "+isFileEndsAsExpected+" isFileContainsExpected: "+isFileContainsExpected,true);*/
 		
 		return (isFileEndsAsExpected && isFileContainsExpected) ;
+	}
+	
+	public static boolean isArrayContains(String[] arr, String str)
+	{
+		for (String arrStr : arr)
+		{
+			if(arrStr.equals(str))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public static void addLogsToFile(File file,boolean fromPathArray)
