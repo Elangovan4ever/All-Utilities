@@ -1,16 +1,21 @@
-//Written by Elangovan Manickam. For any queries or modifications, please contact: elangovan4ever@gmail.com
+//This script is written by Elangovan Manickam. For any queries or modifications, please contact: elangovan4ever@gmail.com
 
 var SUBJECT_KEY='MailSubject';
 var MESSAGE_KEY='MailBody';
 var RECIPIENTS_TO_KEY='RecipientsTO';
 var RECIPIENTS_CC_KEY='RecipientsCC';
 var MAIL_FREQ_KEY='MailTiggerFreq';
+
+var REMINDER_SUBJECT_KEY='ReminderSubject';
+var REMINDER_MESSAGE_KEY='ReminderBody';
+var REMINDER_RECIPIENTS_KEY='RecipientsReminder';
  
 function onOpen()
 {
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
   var menuEntries = [{name:"Mail Preferences",functionName:"showMailSettings"},
-                    {name:"Send Mail Now",functionName:"sendMail"}];
+                    {name:"Send Mail Now",functionName:"sendMail"},
+                     {name:"Send Reminder Now",functionName:"sendReminder"}];
   
   spreadSheet.addMenu("Mail", menuEntries);
   
@@ -22,7 +27,7 @@ function onInstall(e) {
 
 function showMailSettings()
 {
-  var mailSettingUI = HtmlService.createHtmlOutputFromFile("MailSettings.html").setTitle("Mail Settings - APPS TEAM")
+  var mailSettingUI = HtmlService.createHtmlOutputFromFile("MailSettings.html").setTitle("Mail Settings - GM HMI TEAM")
               .setSandboxMode(HtmlService.SandboxMode.IFRAME);
   SpreadsheetApp.getUi().showSidebar(mailSettingUI);
 }
@@ -36,21 +41,25 @@ function getMailSettings()
   var mailSubject = scriptProperties.getProperty(SUBJECT_KEY);
   var mailMessage = scriptProperties.getProperty(MESSAGE_KEY);
   var mailTriggerFreq = scriptProperties.getProperty(MAIL_FREQ_KEY);
+  var recipientsReminder = scriptProperties.getProperty(REMINDER_RECIPIENTS_KEY);
+  var reminderSubject = scriptProperties.getProperty(REMINDER_SUBJECT_KEY);
+  var reminderMessage = scriptProperties.getProperty(REMINDER_MESSAGE_KEY);
 
-  var mailProperties = {recipientsTO:recipientsTO,recipientsCC:recipientsCC,mailSubject:mailSubject,mailMessage:mailMessage,mailTriggerFreq:mailTriggerFreq};
+  var mailProperties = {recipientsTO:recipientsTO,recipientsCC:recipientsCC,mailSubject:mailSubject,mailMessage:mailMessage,mailTriggerFreq:mailTriggerFreq,recipientsReminder:recipientsReminder,reminderSubject:reminderSubject,reminderMessage:reminderMessage};
   return mailProperties;
 }
 
 function saveMailSettings(formObject)
 {
-  Logger.log("here");
+  Logger.log("in saveMailSettings");
   var recipientsTO = formObject.recipientsTO;
   var recipientsCC = formObject.recipientsCC;
   var mailSubject = formObject.mailSubject;
   var mailMessage = formObject.mailMessage;
-  var mailTriggerFreq = formObject.mailTriggerFreq;
-  
-  Logger.log("mailTriggerFreq: "+mailTriggerFreq);
+  var mailTriggerFreq = formObject.mailTriggerFreq;  
+  var recipientsReminder = formObject.recipientsReminder;
+  var reminderSubject = formObject.reminderSubject;
+  var reminderMessage = formObject.reminderMessage;
   
   var scriptProperties = PropertiesService.getScriptProperties();
 
@@ -59,6 +68,10 @@ function saveMailSettings(formObject)
   scriptProperties.setProperty(SUBJECT_KEY,mailSubject);
   scriptProperties.setProperty(MESSAGE_KEY,mailMessage); 
   scriptProperties.setProperty(MAIL_FREQ_KEY,mailTriggerFreq); 
+  
+  scriptProperties.setProperty(REMINDER_SUBJECT_KEY,reminderSubject);
+  scriptProperties.setProperty(REMINDER_MESSAGE_KEY,reminderMessage);
+  scriptProperties.setProperty(REMINDER_RECIPIENTS_KEY,recipientsReminder);
 }
 
 function showMessagePopup(title,errorMessage)
@@ -67,14 +80,30 @@ function showMessagePopup(title,errorMessage)
 }
 
 function getAsPdf(spreadsheetId) {
+  var commonOptionsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("CommonOptions");
+  if (commonOptionsSheet != null) {
+    commonOptionsSheet.hideSheet();
+  }
+  
+  var historySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("History");
+  if (historySheet != null) {
+    historySheet.hideSheet();
+  }
+  
   var file = DriveApp.getFileById(spreadsheetId);
-  var url = "https://docs.google.com/spreadsheets/d/"+spreadsheetId+"/export?&exportFormat=pdf&sheetnames=true&portrait=true&gridlines=false&pagenumbers=true";
+  var url = "https://docs.google.com/spreadsheets/d/"+spreadsheetId+"/export?&exportFormat=pdf&sheetnames=true&portrait=true&gridlines=true&pagenumbers=true";
   var token = ScriptApp.getOAuthToken();
   var response = UrlFetchApp.fetch(url, {
     headers: {
       'Authorization': 'Bearer ' +  token
     }
   });
+  if (commonOptionsSheet != null) {
+    commonOptionsSheet.showSheet();
+  }
+  if (historySheet != null) {
+    historySheet.showSheet();
+  }
   return response.getBlob();
 }
 
@@ -142,14 +171,17 @@ return weekNumber;
 
 function sendMail()
 {
-  //var weekNum = (new Date()).getWeek();
-  var weekNum = WeekNumber(new Date());
-  var todayDate = Utilities.formatDate(new Date(), "GMT", "dd-MMM-yyyy");
+  var sprintReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("SprintReport");
+  var sprintNo = sprintReportSheet.getRange(3, 2).getValue();
+  var sprintStartDate = sprintReportSheet.getRange(3, 6).getValue();
+  var sprintStartDateStr = Utilities.formatDate(sprintStartDate, "GMT+05:30", "dd MMM yyyy");
+  var sprintEndDate = sprintReportSheet.getRange(4, 6).getValue();
+  var sprintEndDateStr = Utilities.formatDate(sprintEndDate, "GMT+05:30", "dd MMM yyyy");
   
   var email = Session.getEffectiveUser();
   
   var scriptProperties = PropertiesService.getScriptProperties();
-  var mailSubject = "WEEK "+weekNum+ ":"+scriptProperties.getProperty(SUBJECT_KEY)+" ("+todayDate+")";
+  var mailSubject = scriptProperties.getProperty(SUBJECT_KEY)+" "+sprintNo+ " ("+ sprintStartDateStr +" - "+ sprintEndDateStr +")";
   var mailMessage = scriptProperties.getProperty(MESSAGE_KEY);
   var recipientsTO = scriptProperties.getProperty(RECIPIENTS_TO_KEY);
   var recipientsCC = scriptProperties.getProperty(RECIPIENTS_CC_KEY);  
@@ -157,7 +189,26 @@ function sendMail()
   var attachementDocPdf = getAsPdf(SpreadsheetApp.getActiveSpreadsheet().getId());
   var attachementDocXls = getAsXls(SpreadsheetApp.getActiveSpreadsheet().getId());
  
-  MailApp.sendEmail({to:recipientsTO,cc:recipientsCC,subject:mailSubject,htmlBody:mailMessage,attachments:[attachementDocPdf,attachementDocXls],name:'ON BEHALF OF APPS'});
+  MailApp.sendEmail({to:recipientsTO,cc:recipientsCC,subject:mailSubject,htmlBody:mailMessage,attachments:[attachementDocPdf,attachementDocXls],name:'Effort Report Tool'});
+}
+
+function sendReminder()
+{
+  var sprintReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("SprintReport");
+  var sprintNo = sprintReportSheet.getRange(3, 2).getValue();
+  var sprintStartDate = sprintReportSheet.getRange(3, 6).getValue();
+  var sprintStartDateStr = Utilities.formatDate(sprintStartDate, "GMT+05:30", "dd MMM yyyy");
+  var sprintEndDate = sprintReportSheet.getRange(4, 6).getValue();
+  var sprintEndDateStr = Utilities.formatDate(sprintEndDate, "GMT+05:30", "dd MMM yyyy");
+  
+  var email = Session.getEffectiveUser();
+  
+  var scriptProperties = PropertiesService.getScriptProperties();
+  var reminderSubject = scriptProperties.getProperty(REMINDER_SUBJECT_KEY)+" "+sprintNo+ " ("+ sprintStartDateStr +" - "+ sprintEndDateStr +")";
+  var reminderMessage = scriptProperties.getProperty(REMINDER_MESSAGE_KEY);
+  var recipientsReiminder = scriptProperties.getProperty(REMINDER_RECIPIENTS_KEY);
+    
+  MailApp.sendEmail(recipientsReiminder,reminderSubject, reminderMessage);
 }
 
 function deleteTrigger(triggerId) 
@@ -173,7 +224,7 @@ function deleteTrigger(triggerId)
       break;
     }
   }
-}
+} 
 
 function deleteAllTriggers() 
 {
@@ -215,4 +266,49 @@ function setMailTrigger(selectedFreq)
              break;
        
     }
+}
+
+function clearData()
+{
+  var sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();  
+  var historySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("History");
+  var sprintReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("SprintReport");
+  var sprintNo = sprintReportSheet.getRange(3, 5).getValue();
+  
+  for (var i = 0 ; i < sheets.length ; i++ )
+  {
+    if(sheets[i].getName() != "CommonOptions" && sheets[i].getName() != "Holidays" && sheets[i].getName() != "SprintReport"  && sheets[i].getName() != "History")
+    {
+      Logger.log("sheets[i].getName(): "+sheets[i].getName());
+      copyData(sheets[i], historySheet, sprintNo);
+      sheets[i].getDataRange().offset(1,0).clearContent();
+    }
+  }
+}
+
+function clearDataTest(sourceSheet, destSheet)
+{
+  var sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();  
+  var historySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("History");
+  var sprintReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("SprintReport");
+  var sprintNo = sprintReportSheet.getRange(3, 5).getValue();
+  
+  for (var i = 0 ; i < sheets.length ; i++ )
+  {
+    if(sheets[i].getName() != "CommonOptions" && sheets[i].getName() != "Holidays" && sheets[i].getName() != "SprintReport"  && sheets[i].getName() != "History")
+    {
+      Logger.log("sheets[i].getName(): "+sheets[i].getName());
+      copyData(sheets[i], historySheet, sprintNo);
+    }
+  }
+}
+
+function copyData(sourceSheet, destSheet, sprintNo)
+{
+  var sourceRange = sourceSheet.getDataRange().offset(1,0);
+  var sourceData = sourceRange.getValues();
+  destSheet.appendRow([sourceSheet.getSheetName(),"Sprint: "+sprintNo]);
+  var resourceNameRowRange = destSheet.getRange(destSheet.getLastRow(),1,1,sourceData[0].length);
+  resourceNameRowRange.setBackground("#b30059").setFontColor("white");
+  destSheet.getRange(destSheet.getLastRow()+1, 1, sourceData.length, sourceData[0].length).setValues(sourceData);
 }
