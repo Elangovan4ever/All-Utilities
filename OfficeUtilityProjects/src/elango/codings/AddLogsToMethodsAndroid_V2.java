@@ -23,11 +23,13 @@ public class AddLogsToMethodsAndroid_V2 {
 			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/"};*/
 	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view/inputmethod/"};
 	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/InputMethodSubtypeSwitchingController.java"};
-	public static final String[] PATHS_TO_ADD_LOGS = {"/home/emanickam/workspace/ROW_MY18/packages/inputmethods/LatinIME/java"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"/home/nidesai/workspace/MY19/packages/inputmethods/LatinIME/java/"};
 
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
+	//if you add * in the list then other values in the VALID_FILE_SHOULD_CONTAINS are ignored.
 	public static final String[] VALID_FILE_SHOULD_CONTAINS = {"input","systemserver","*"};
+	//public static final String[] VALID_FILE_SHOULD_CONTAINS = {"KeyPreview","KeyDrawParams"};
 	public static final String[] VALID_FILE_SHOULD_NOT_CONTAINS = {"test"};
 	public static final String[] VALID_FILE_SHOULD_END_WITH = {".java"};
 	
@@ -236,7 +238,7 @@ public class AddLogsToMethodsAndroid_V2 {
 		{
 			for (String validFileContains : VALID_FILE_SHOULD_CONTAINS)
 			{
-				if(filename.contains(validFileContains))
+				if(filename.contains(validFileContains.toLowerCase()))
 				{
 					isFileContainsExpected = true;
 					break;
@@ -244,8 +246,7 @@ public class AddLogsToMethodsAndroid_V2 {
 			}
 		}
 		
-		/*printLogs("filename: "+filename,true);
-		printLogs("isFileEndsAsExpected: "+isFileEndsAsExpected+" isFileContainsExpected: "+isFileContainsExpected,true);*/
+		//printLogs("filename: "+filename+", isFileEndsAsExpected: "+isFileEndsAsExpected+", isFileContainsExpected: "+isFileContainsExpected,true);
 		
 		return (isFileEndsAsExpected && isFileContainsExpected) ;
 	}
