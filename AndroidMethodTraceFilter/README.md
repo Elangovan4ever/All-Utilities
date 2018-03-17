@@ -1,3 +1,5 @@
+Written by: Elangovan Manickam
+
 # AndroidMethodTraceFilter
 This tool is to show a hierarchy of function calls from android stack which is obtained via method tracing option in Android.
 

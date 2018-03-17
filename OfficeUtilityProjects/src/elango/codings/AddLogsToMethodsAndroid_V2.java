@@ -16,19 +16,18 @@ public class AddLogsToMethodsAndroid_V2 {
 	public static String IMPORT_FOR_LOGGER = "android.util.Log";
 	//public static String IMPORT_FOR_LOGGER = "android.util.Slog";
 	
-	//====== From here combine for fresh setup =============
-	
-	/*public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/services",
-			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/os/SystemService.java",
-			"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/"};*/
-	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/android/view/inputmethod/"};
-	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY18/frameworks/base/core/java/com/android/internal/inputmethod/InputMethodSubtypeSwitchingController.java"};
-	public static final String[] PATHS_TO_ADD_LOGS = {"/home/nidesai/workspace/MY19/packages/inputmethods/LatinIME/java/"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY19/frameworks/base/services",
+	//		"/data/work/emanickam/workspace/ROW_MY19/frameworks/base/core/java/android/os/SystemService.java",
+	//		"/data/work/emanickam/workspace/ROW_MY19/frameworks/base/core/java/com/android/internal/inputmethod/"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY19/frameworks/base/core/java/android/view/inputmethod/"};
+	//public static final String[] PATHS_TO_ADD_LOGS = {"/data/work/emanickam/workspace/ROW_MY19/frameworks/base/core/java/com/android/internal/inputmethod/InputMethodSubtypeSwitchingController.java"};
+	public static final String[] PATHS_TO_ADD_LOGS = {"/home/emanickam/workspace/MY19/packages/inputmethods/LatinIME/java"};
 
 	public static final String[] LOCAL_PATHS_TO_ADD_LOGS = {getProjectDirectory()+ "\\resources"};
 	
 	//if you add * in the list then other values in the VALID_FILE_SHOULD_CONTAINS are ignored.
 	public static final String[] VALID_FILE_SHOULD_CONTAINS = {"input","systemserver","*"};
+	//public static final String[] VALID_FILE_SHOULD_CONTAINS = {"input","systemserver","systemserver"};
 	//public static final String[] VALID_FILE_SHOULD_CONTAINS = {"KeyPreview","KeyDrawParams"};
 	public static final String[] VALID_FILE_SHOULD_NOT_CONTAINS = {"test"};
 	public static final String[] VALID_FILE_SHOULD_END_WITH = {".java"};
