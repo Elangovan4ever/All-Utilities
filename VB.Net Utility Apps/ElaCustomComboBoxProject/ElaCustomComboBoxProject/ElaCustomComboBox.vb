@@ -9,7 +9,7 @@ Public Class ElaCustomComboBox
     Private mBorderColor As Color
     Private mBorderColorFocus As Color
     Private mBorderColorMouseEnter As Color
-    Private mBorderWidth As Integer
+    Private mBorderThickness As BorderThicknessEnum
 
     Private mCurrentArrowSquareColor As Color
     Private mCurrentArrowTriangleColor As Color
@@ -19,6 +19,12 @@ Public Class ElaCustomComboBox
     Private mArrowTriangleColorFocus As Color
     Private mArrowSquareColorMouseEnter As Color
     Private mArrowTriangleColorMouseEnter As Color
+
+    Enum BorderThicknessEnum
+        Normal = 2
+        Thick = 4
+        Thicker = 8
+    End Enum
 
     Public Property BorderColor As Color
         Get
@@ -47,12 +53,12 @@ Public Class ElaCustomComboBox
         End Set
     End Property
 
-    Public Property BorderWidth As Integer
+    Public Property BorderThickness As BorderThicknessEnum
         Get
-            Return mBorderWidth
+            Return mBorderThickness
         End Get
-        Set(ByVal Value As Integer)
-            mBorderWidth = Value
+        Set(ByVal Value As BorderThicknessEnum)
+            mBorderThickness = Value
         End Set
     End Property
 
@@ -120,10 +126,6 @@ Public Class ElaCustomComboBox
         Me.BorderColor = Color.DeepSkyBlue
         Me.BorderColorFocus = Color.Orange
         Me.BorderColorMouseEnter = Color.Green
-        Me.mBorderColor = Color.DeepSkyBlue
-        Me.mBorderColorFocus = Color.Orange
-        Me.mBorderColorMouseEnter = Color.Green
-
 
         Me.ArrowSquareColor = Color.DeepSkyBlue
         Me.ArrowTriangleColor = Color.Gray
@@ -131,18 +133,12 @@ Public Class ElaCustomComboBox
         Me.ArrowTriangleColorFocus = Color.Gray
         Me.ArrowSquareColorMouseEnter = Color.Green
         Me.ArrowTriangleColorMouseEnter = Color.White
-        Me.mArrowSquareColor = Color.DeepSkyBlue
-        Me.mArrowTriangleColor = Color.Gray
-        Me.mArrowSquareColorFocus = Color.Orange
-        Me.mArrowTriangleColorFocus = Color.Gray
-        Me.mArrowSquareColorMouseEnter = Color.Green
-        Me.mArrowTriangleColorMouseEnter = Color.White
+
+        Me.BorderThickness = BorderThicknessEnum.Thick
 
         mCurrentBorderColor = Me.mBorderColor
         mCurrentArrowSquareColor = Me.mArrowSquareColor
         mCurrentArrowTriangleColor = Me.mArrowTriangleColor
-
-        Me.BorderWidth = 4
 
     End Sub
 
@@ -188,7 +184,7 @@ Public Class ElaCustomComboBox
             Dim g As Graphics = Me.CreateGraphics
 
             g.FillRectangle(New SolidBrush(Color.White), Me.ClientRectangle)
-            g.DrawRectangle(New Pen(Me.mCurrentBorderColor, Me.mBorderWidth), Me.ClientRectangle)
+            g.DrawRectangle(New Pen(Me.mCurrentBorderColor, Me.BorderThickness), Me.ClientRectangle)
 
             Dim pth As Drawing2D.GraphicsPath = New Drawing2D.GraphicsPath()
             Dim TopLeft As PointF = New PointF(Me.Width - 16, (Me.Height - 8) / 2)
@@ -215,43 +211,43 @@ Public Class ElaCustomComboBox
     Protected Overrides Sub OnMouseEnter(ByVal e As System.EventArgs)
         MyBase.OnMouseEnter(e)
         If Me.Focused Then Exit Sub
-        Me.mCurrentBorderColor = Me.mBorderColorMouseEnter
-        Me.mCurrentArrowSquareColor = Me.mArrowSquareColorMouseEnter
-        Me.mCurrentArrowTriangleColor = Me.mArrowTriangleColorMouseEnter
+        Me.mCurrentBorderColor = Me.BorderColorMouseEnter
+        Me.mCurrentArrowSquareColor = Me.ArrowSquareColorMouseEnter
+        Me.mCurrentArrowTriangleColor = Me.ArrowTriangleColorMouseEnter
         Me.Invalidate()
     End Sub
 
     Protected Overrides Sub OnMouseLeave(ByVal e As System.EventArgs)
         MyBase.OnMouseLeave(e)
         If Me.Focused Then Exit Sub
-        Me.mCurrentBorderColor = Me.mBorderColor
-        Me.mCurrentArrowSquareColor = Me.mArrowSquareColor
-        Me.mCurrentArrowTriangleColor = Me.mArrowTriangleColor
+        Me.mCurrentBorderColor = Me.BorderColor
+        Me.mCurrentArrowSquareColor = Me.ArrowSquareColor
+        Me.mCurrentArrowTriangleColor = Me.ArrowTriangleColor
         Me.Invalidate()
     End Sub
 
     Protected Overrides Sub OnGotFocus(ByVal e As System.EventArgs)
         MyBase.OnGotFocus(e)
-        Me.mCurrentBorderColor = Me.mBorderColorFocus
-        Me.mCurrentArrowSquareColor = Me.mArrowSquareColorFocus
-        Me.mCurrentArrowTriangleColor = Me.mArrowTriangleColorFocus
+        Me.mCurrentBorderColor = Me.BorderColorFocus
+        Me.mCurrentArrowSquareColor = Me.ArrowSquareColorFocus
+        Me.mCurrentArrowTriangleColor = Me.ArrowTriangleColorFocus
         Me.Invalidate()
     End Sub
 
     Protected Overrides Sub OnLostFocus(ByVal e As System.EventArgs)
         MyBase.OnLostFocus(e)
-        Me.mCurrentBorderColor = Me.mBorderColor
-        Me.mCurrentArrowSquareColor = Me.mArrowSquareColor
-        Me.mCurrentArrowTriangleColor = Me.mArrowTriangleColor
+        Me.mCurrentBorderColor = Me.BorderColor
+        Me.mCurrentArrowSquareColor = Me.ArrowSquareColor
+        Me.mCurrentArrowTriangleColor = Me.ArrowTriangleColor
         Me.Invalidate()
     End Sub
 
     Protected Overrides Sub OnMouseHover(ByVal e As System.EventArgs)
         MyBase.OnMouseHover(e)
         If Me.Focused Then Exit Sub
-        Me.mCurrentBorderColor = Me.mBorderColorMouseEnter
-        Me.mCurrentArrowSquareColor = Me.mArrowSquareColorMouseEnter
-        Me.mCurrentArrowTriangleColor = Me.mArrowTriangleColorMouseEnter
+        Me.mCurrentBorderColor = Me.BorderColorMouseEnter
+        Me.mCurrentArrowSquareColor = Me.ArrowSquareColorMouseEnter
+        Me.mCurrentArrowTriangleColor = Me.ArrowTriangleColorMouseEnter
         Me.Invalidate()
     End Sub
 
