@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2009
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomButtonControl", "ElaCustomButtonControl\ElaCustomButtonControl.vbproj", "{5A7F583B-A274-4D1E-B0F9-182BF865E67B}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "CButtonLib", "CButton\CButton\CButtonLib.vbproj", "{24116FE6-8501-45F0-ADD0-67FFFB037BAF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5A7F583B-A274-4D1E-B0F9-182BF865E67B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A7F583B-A274-4D1E-B0F9-182BF865E67B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A7F583B-A274-4D1E-B0F9-182BF865E67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A7F583B-A274-4D1E-B0F9-182BF865E67B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24116FE6-8501-45F0-ADD0-67FFFB037BAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24116FE6-8501-45F0-ADD0-67FFFB037BAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24116FE6-8501-45F0-ADD0-67FFFB037BAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24116FE6-8501-45F0-ADD0-67FFFB037BAF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6EB5EEB-6E1D-47AF-9D46-930BCDBD8815}
+	EndGlobalSection
+EndGlobal

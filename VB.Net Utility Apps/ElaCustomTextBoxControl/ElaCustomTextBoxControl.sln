@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2009
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomTextBoxControl", "ElaCustomTextBoxControl\ElaCustomTextBoxControl.vbproj", "{58B5C64D-F476-4674-9F23-AC7747757613}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomTextBoxTestApp", "ElaCustomTextBoxTestApp\ElaCustomTextBoxTestApp.vbproj", "{692F4FFC-7535-4B19-96AD-F2B10149AAA4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58B5C64D-F476-4674-9F23-AC7747757613}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58B5C64D-F476-4674-9F23-AC7747757613}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58B5C64D-F476-4674-9F23-AC7747757613}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58B5C64D-F476-4674-9F23-AC7747757613}.Release|Any CPU.Build.0 = Release|Any CPU
+		{692F4FFC-7535-4B19-96AD-F2B10149AAA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{692F4FFC-7535-4B19-96AD-F2B10149AAA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{692F4FFC-7535-4B19-96AD-F2B10149AAA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{692F4FFC-7535-4B19-96AD-F2B10149AAA4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7784DD7E-592D-4745-BE15-8BA03D6EC362}
+	EndGlobalSection
+EndGlobal
