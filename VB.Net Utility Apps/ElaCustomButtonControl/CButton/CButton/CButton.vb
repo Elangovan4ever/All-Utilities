@@ -521,32 +521,98 @@ Public Class CButton
 	End Property
 
 	Private _ColorFillBlend As cBlendItems = DefaultColorFillBlend()
-	''' <summary>
-	''' The ColorBlend used to fill the CButton
-	''' </summary>
-	<Description("The ColorBlend used to fill the CButton"), _
-	Category("Appearance CButton"), _
-	RefreshProperties(RefreshProperties.All), _
-	Editor(GetType(BlendTypeEditor), GetType(UITypeEditor))> _
-	Public Property ColorFillBlend() As cBlendItems
-		Get
-			Return _ColorFillBlend
-		End Get
-		Set(ByVal value As cBlendItems)
-			If value.iColor.Length = value.iPoint.Length Then
-				value.iPoint(0) = 0
-				value.iPoint(value.iPoint.Length - 1) = 1
-				_ColorFillBlend = value
-			Else
-				MsgBox("The number of colors must match the number of positions. The blend will be reset")
-				Exit Property
-			End If
-			UpdateDimBlends()
-			Invalidate()
-		End Set
-	End Property
+    ''' <summary>
+    ''' The ColorBlend used to fill the CButton
+    ''' </summary>
+    <Description("The ColorBlend used to fill the CButton"),
+    Category("Appearance CButton"),
+    RefreshProperties(RefreshProperties.All),
+    Editor(GetType(BlendTypeEditor), GetType(UITypeEditor))>
+    Public Property ColorFillBlend() As cBlendItems
+        Get
+            Return _ColorFillBlend
+        End Get
+        Set(ByVal value As cBlendItems)
+            If value.iColor.Length = value.iPoint.Length Then
+                value.iPoint(0) = 0
+                value.iPoint(value.iPoint.Length - 1) = 1
+                _ColorFillBlend = value
+            Else
+                MsgBox("The number of colors must match the number of positions. The blend will be reset")
+                Exit Property
+            End If
+            UpdateDimBlends()
+            Invalidate()
+        End Set
+    End Property
 
-	Private Function DefaultColorFillBlend() As cBlendItems
+    Private _ImageKey As Integer
+    ''' <summary>
+    ''' Elango - Dummy, dont use this
+    ''' </summary>
+    <Category("Appearance CButton"),
+   Description("Get or Set the ImageList control")>
+    Public Property ImageKey() As Integer
+        Get
+            Return _ImageKey
+        End Get
+        Set(ByVal Value As Integer)
+            If Imagelist.Images.Count > 0 Then
+                If Value >= 0 And Value < Imagelist.Images.Count Then
+                    _ImageKey = Value
+                    Image = Imagelist.Images.Item(Value)
+                    Invalidate()
+                End If
+            End If
+        End Set
+    End Property
+
+    Private _AutoEllipsis As Boolean
+    ''' <summary>
+    ''' Elango - Dummy, dont use this
+    ''' </summary>
+    <Category("Appearance CButton"),
+   Description("Get or Set the AutoEllipsis control")>
+    Public Property AutoEllipsis() As Boolean
+        Get
+            Return _AutoEllipsis
+        End Get
+        Set(ByVal Value As Boolean)
+
+        End Set
+    End Property
+
+    Private _UseVisualStyleBackColor As Boolean
+    ''' <summary>
+    ''' Elango - Dummy, dont use this
+    ''' </summary>
+    <Category("Appearance CButton"),
+   Description("Get or Set the UseVisualStyleBackColor control")>
+    Public Property UseVisualStyleBackColor() As Boolean
+        Get
+            Return _AutoEllipsis
+        End Get
+        Set(ByVal Value As Boolean)
+
+        End Set
+    End Property
+
+    Private _AutoSizeMode As Boolean
+    ''' <summary>
+    ''' Elango - Dummy, dont use this
+    ''' </summary>
+    <Category("Appearance CButton"),
+   Description("Get or Set the AutoSizeMode control")>
+    Public Property AutoSizeMode() As Boolean
+        Get
+            Return _AutoSizeMode
+        End Get
+        Set(ByVal Value As Boolean)
+
+        End Set
+    End Property
+
+    Private Function DefaultColorFillBlend() As cBlendItems
 		Return New cBlendItems(New Color() {Color.AliceBlue, Color.RoyalBlue, Color.Navy}, New Single() {0, 0.5, 1})
 	End Function
 
