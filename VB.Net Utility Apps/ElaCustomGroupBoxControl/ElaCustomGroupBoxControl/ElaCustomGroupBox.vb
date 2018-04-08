@@ -97,7 +97,7 @@ Public Class ElaCustomGroupBox
         Me.BorderColor = Color.DeepSkyBlue
         Me.BorderColorFocus = Color.Orange
         Me.BorderColorMouseEnter = Color.Green
-        Me.BorderThickness = BorderThicknessEnum.Thick
+        Me.BorderThickness = BorderThicknessEnum.Thin
 
         mCurrentBorderColor = Me.mBorderColor
     End Sub
@@ -111,8 +111,10 @@ Public Class ElaCustomGroupBox
         Dim tSize As Size = TextRenderer.MeasureText(Me.Text, Me.Font)
         Dim borderRect As Rectangle = Me.DisplayRectangle
 
-        borderRect.Y = (borderRect.Y + (tSize.Height / 2))
-        borderRect.Height = (borderRect.Height - (tSize.Height / 2))
+        'borderRect.Y = (borderRect.Y + (tSize.Height / 2))
+        borderRect.Y = borderRect.Y - 10
+        borderRect.Height = borderRect.Height + 10
+        'borderRect.Height = (borderRect.Height - (tSize.Height / 2))
 
         'ControlPaint.DrawBorder(e.Graphics, borderRect, mCurrentBorderColor,ButtonBorderStyle.Solid)
 
@@ -123,8 +125,9 @@ Public Class ElaCustomGroupBox
                                 mCurrentBorderColor, mBorderThickness, ButtonBorderStyle.Solid)
 
         Dim textRect As Rectangle = Me.DisplayRectangle
+        textRect.Y = borderRect.Y - 5
         textRect.X = (textRect.X + 6)
-        textRect.Width = tSize.Width + 6
+        textRect.Width = tSize.Width + 1
         textRect.Height = tSize.Height
 
         e.Graphics.FillRectangle(New SolidBrush(Me.BackColor), textRect)

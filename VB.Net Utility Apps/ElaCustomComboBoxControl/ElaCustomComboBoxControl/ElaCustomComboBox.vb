@@ -273,34 +273,34 @@ Public Class ElaCustomComboBox
         components = New System.ComponentModel.Container()
     End Sub
 
-    Private Sub myComboBox_KeyUp(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles MyBase.KeyUp
-        Dim tmpcombo As System.Windows.Forms.ComboBox
-        tmpcombo = CType(sender, System.Windows.Forms.ComboBox)
-        AutoComplete_KeyUp(tmpcombo, e)
-    End Sub
+    'Private Sub myComboBox_KeyUp(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles MyBase.KeyUp
+    '    Dim tmpcombo As System.Windows.Forms.ComboBox
+    '    tmpcombo = CType(sender, System.Windows.Forms.ComboBox)
+    '    AutoComplete_KeyUp(tmpcombo, e)
+    'End Sub
 
 
-    Private Sub AutoComplete_KeyUp(ByVal cbo As ComboBox, ByVal e As KeyEventArgs)
-        Dim sTypedText As String
-        Dim iFoundIndex As Integer
-        Dim sFoundText As String
-        Dim sAppendText As String
-        Select Case e.KeyCode
-            Case Keys.Back, Keys.Left, Keys.Right, Keys.Up, Keys.Delete, Keys.Down, Keys.Home, Keys.End, Keys.ShiftKey, Keys.ControlKey
-                Return
-        End Select
+    'Private Sub AutoComplete_KeyUp(ByVal cbo As ComboBox, ByVal e As KeyEventArgs)
+    '    Dim sTypedText As String
+    '    Dim iFoundIndex As Integer
+    '    Dim sFoundText As String
+    '    Dim sAppendText As String
+    '    Select Case e.KeyCode
+    '        Case Keys.Back, Keys.Left, Keys.Right, Keys.Up, Keys.Delete, Keys.Down, Keys.Home, Keys.End, Keys.ShiftKey, Keys.ControlKey
+    '            Return
+    '    End Select
 
-        sTypedText = cbo.Text
-        iFoundIndex = cbo.FindString(sTypedText)
+    '    sTypedText = cbo.Text
+    '    iFoundIndex = cbo.FindString(sTypedText)
 
-        If iFoundIndex >= 0 Then
-            sFoundText = cbo.Items(iFoundIndex)
-            sAppendText = sFoundText.Substring(sTypedText.Length)
-            cbo.Text = sTypedText & sAppendText
-            cbo.SelectionStart = sTypedText.Length
-            cbo.SelectionLength = sAppendText.Length
-        End If
-    End Sub
+    '    If iFoundIndex >= 0 Then
+    '        sFoundText = cbo.Items(iFoundIndex)
+    '        sAppendText = sFoundText.Substring(sTypedText.Length)
+    '        cbo.Text = sTypedText & sAppendText
+    '        cbo.SelectionStart = sTypedText.Length
+    '        cbo.SelectionLength = sAppendText.Length
+    '    End If
+    'End Sub
 
 
 
