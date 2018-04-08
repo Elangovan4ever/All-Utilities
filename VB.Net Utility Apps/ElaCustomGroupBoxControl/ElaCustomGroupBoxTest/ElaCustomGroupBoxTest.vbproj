@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5A7F583B-A274-4D1E-B0F9-182BF865E67B}</ProjectGuid>
+    <ProjectGuid>{23E7A34A-4E87-401F-9CD8-ED589D3DEAE5}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <StartupObject>ElaCustomButtonControl.My.MyApplication</StartupObject>
-    <RootNamespace>ElaCustomButtonControl</RootNamespace>
-    <AssemblyName>ElaCustomButtonControl</AssemblyName>
+    <StartupObject>ElaCustomGroupBoxTest.My.MyApplication</StartupObject>
+    <RootNamespace>ElaCustomGroupBoxTest</RootNamespace>
+    <AssemblyName>ElaCustomGroupBoxTest</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>WindowsForms</MyType>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
@@ -21,7 +21,7 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Debug\</OutputPath>
-    <DocumentationFile>ElaCustomButtonControl.xml</DocumentationFile>
+    <DocumentationFile>ElaCustomGroupBoxTest.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -31,7 +31,7 @@
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>ElaCustomButtonControl.xml</DocumentationFile>
+    <DocumentationFile>ElaCustomGroupBoxTest.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
@@ -79,12 +79,6 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form2.Designer.vb">
-      <DependentUpon>Form2.vb</DependentUpon>
-    </Compile>
-    <Compile Include="Form2.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -104,9 +98,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.vb</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Form2.resx">
-      <DependentUpon>Form2.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
@@ -128,9 +119,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CButton\CButton\CButtonLib.vbproj">
-      <Project>{24116fe6-8501-45f0-add0-67fffb037baf}</Project>
-      <Name>CButtonLib</Name>
+    <ProjectReference Include="..\ElaCustomGroupBoxControl\ElaCustomGroupBoxControl.vbproj">
+      <Project>{5202a278-af63-4a42-b073-73ef512483c2}</Project>
+      <Name>ElaCustomGroupBoxControl</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
