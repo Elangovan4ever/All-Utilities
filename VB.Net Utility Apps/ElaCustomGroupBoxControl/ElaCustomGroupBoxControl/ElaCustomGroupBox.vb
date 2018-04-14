@@ -100,6 +100,7 @@ Public Class ElaCustomGroupBox
         Me.BorderThickness = BorderThicknessEnum.Thin
 
         mCurrentBorderColor = Me.mBorderColor
+        Me.ForeColor = Color.Black
     End Sub
 
     Protected Overrides Sub OnResize(e As System.EventArgs)
@@ -113,7 +114,9 @@ Public Class ElaCustomGroupBox
 
         'borderRect.Y = (borderRect.Y + (tSize.Height / 2))
         borderRect.Y = borderRect.Y - 10
-        borderRect.Height = borderRect.Height + 10
+        borderRect.X = borderRect.X - 2
+        borderRect.Width = borderRect.Width + 5
+        borderRect.Height = borderRect.Height + 12
         'borderRect.Height = (borderRect.Height - (tSize.Height / 2))
 
         'ControlPaint.DrawBorder(e.Graphics, borderRect, mCurrentBorderColor,ButtonBorderStyle.Solid)
@@ -127,7 +130,7 @@ Public Class ElaCustomGroupBox
         Dim textRect As Rectangle = Me.DisplayRectangle
         textRect.Y = borderRect.Y - 5
         textRect.X = (textRect.X + 6)
-        textRect.Width = tSize.Width + 1
+        textRect.Width = tSize.Width + 3
         textRect.Height = tSize.Height
 
         e.Graphics.FillRectangle(New SolidBrush(Me.BackColor), textRect)

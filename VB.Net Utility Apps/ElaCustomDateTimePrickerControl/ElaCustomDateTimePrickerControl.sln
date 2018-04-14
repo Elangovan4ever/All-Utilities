@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2009
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomDateTimePrickerControl", "ElaCustomDateTimePrickerControl\ElaCustomDateTimePrickerControl.vbproj", "{D6783024-221F-4EB6-A72A-AFD1D56E8FC0}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomDatePickerTest", "ElaCustomDatePickerTest\ElaCustomDatePickerTest.vbproj", "{92B33F27-F61E-4A83-81CE-8DF931B5F872}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6783024-221F-4EB6-A72A-AFD1D56E8FC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6783024-221F-4EB6-A72A-AFD1D56E8FC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6783024-221F-4EB6-A72A-AFD1D56E8FC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6783024-221F-4EB6-A72A-AFD1D56E8FC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92B33F27-F61E-4A83-81CE-8DF931B5F872}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92B33F27-F61E-4A83-81CE-8DF931B5F872}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92B33F27-F61E-4A83-81CE-8DF931B5F872}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92B33F27-F61E-4A83-81CE-8DF931B5F872}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B01BCC91-3369-4C17-B863-69E59376D4E3}
+	EndGlobalSection
+EndGlobal
