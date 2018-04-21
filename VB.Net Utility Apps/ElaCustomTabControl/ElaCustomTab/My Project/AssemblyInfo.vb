@@ -8,17 +8,17 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("ElaCustomTabControl")>
+<Assembly: AssemblyTitle("ElaCustomTab")>
 <Assembly: AssemblyDescription("")>
 <Assembly: AssemblyCompany("")>
-<Assembly: AssemblyProduct("ElaCustomTabControl")>
+<Assembly: AssemblyProduct("ElaCustomTab")>
 <Assembly: AssemblyCopyright("Copyright ©  2018")>
 <Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(False)>
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("87d9d2ec-c177-421a-b743-dd59a5a7d8d8")>
+<Assembly: Guid("15e8f052-be8f-4c51-86e6-c9a3bab1b661")>
 
 ' Version information for an assembly consists of the following four values:
 '
