@@ -128,9 +128,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ElaCustomTab\ElaCustomTab.vbproj">
+    <ProjectReference Include="..\ElaCustomTabContorl\ElaCustomTabControl.vbproj">
       <Project>{a05bddcc-a4cb-4238-a81c-3031e0d0f48b}</Project>
-      <Name>ElaCustomTab</Name>
+      <Name>ElaCustomTabControl</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />

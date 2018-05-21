@@ -1624,8 +1624,8 @@ End If
 			Case Keys.Enter, Keys.Space, Keys.Return
 				e.Handled = True
 				If MouseDrawState = eMouseDrawState.Down Then
-					Parent.Text = Cursor.Position.ToString
-					If ButtonArea.Contains(Me.PointToClient(Cursor.Position)) Then
+                    'Parent.Text = Cursor.Position.ToString
+                    If ButtonArea.Contains(Me.PointToClient(Cursor.Position)) Then
 						MouseDrawState = eMouseDrawState.Over
 					Else
 						MouseDrawState = eMouseDrawState.Up

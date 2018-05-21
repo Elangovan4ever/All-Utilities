@@ -122,9 +122,12 @@ Public Class ElaCustomTab
         Dim textrect As Rectangle = contentRect
         textrect.Width -= FontHeight
 
+        Dim tabImageWidth = 0
         If tabImage IsNot Nothing Then
+            tabImageWidth = tabImage.Width
             textrect.Width -= tabImage.Width
             textrect.X += tabImage.Width
+
         End If
 
         Dim frColor As Color = If(id = SelectedIndex, Color.Red, Me.ForeColor)
@@ -132,7 +135,7 @@ Public Class ElaCustomTab
         Using bm As Bitmap = New Bitmap(contentRect.Width, contentRect.Height)
             Using bmGraphics As Graphics = Graphics.FromImage(bm)
                 ''TextRenderer.DrawText(bmGraphics, Me.TabPages(id).Text, Me.Font, textrect, frColor, bkColor)
-                TextRenderer.DrawText(bmGraphics, Me.TabPages(id).Text, Me.Font, New Point(tabImage.Width + Me.Padding.X, Me.Padding.Y), frColor, bkColor)
+                TextRenderer.DrawText(bmGraphics, Me.TabPages(id).Text, Me.Font, New Point(tabImageWidth + Me.Padding.X, Me.Padding.Y), frColor, bkColor)
                 If (tabImage IsNot Nothing) Then
                     Dim imageRect As New Rectangle(Padding.X, 0, tabImage.Width, tabImage.Height)
                     imageRect.Offset(0, (contentRect.Height - imageRect.Height) \ 2)

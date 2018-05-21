@@ -23,131 +23,121 @@ Partial Class Form2
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
-        Dim CBlendItems1 As CButtonLib.cBlendItems = New CButtonLib.cBlendItems()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Form2))
+        Me.TabControl1 = New System.Windows.Forms.TabControl()
+        Me.TabPage1 = New System.Windows.Forms.TabPage()
+        Me.GroupBox1 = New System.Windows.Forms.GroupBox()
+        Me.CButton2 = New CButtonLib.CButton()
         Me.Button1 = New System.Windows.Forms.Button()
-        Me.Button2 = New System.Windows.Forms.Button()
-        Me.Button3 = New System.Windows.Forms.Button()
-        Me.TextBox1 = New System.Windows.Forms.TextBox()
-        Me.TextBox2 = New System.Windows.Forms.TextBox()
-        Me.CButton1 = New CButtonLib.CButton()
-        Me.CButton10 = New CButtonLib.CButton()
+        Me.TextBox4 = New System.Windows.Forms.TextBox()
+        Me.TextBox3 = New System.Windows.Forms.TextBox()
+        Me.TabPage2 = New System.Windows.Forms.TabPage()
+        Me.TabControl1.SuspendLayout()
+        Me.TabPage1.SuspendLayout()
+        Me.GroupBox1.SuspendLayout()
         Me.SuspendLayout()
+        '
+        'TabControl1
+        '
+        Me.TabControl1.Controls.Add(Me.TabPage1)
+        Me.TabControl1.Controls.Add(Me.TabPage2)
+        Me.TabControl1.Location = New System.Drawing.Point(12, 12)
+        Me.TabControl1.Name = "TabControl1"
+        Me.TabControl1.SelectedIndex = 0
+        Me.TabControl1.Size = New System.Drawing.Size(338, 318)
+        Me.TabControl1.TabIndex = 15
+        '
+        'TabPage1
+        '
+        Me.TabPage1.Controls.Add(Me.GroupBox1)
+        Me.TabPage1.Controls.Add(Me.Button1)
+        Me.TabPage1.Controls.Add(Me.TextBox4)
+        Me.TabPage1.Controls.Add(Me.TextBox3)
+        Me.TabPage1.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage1.Name = "TabPage1"
+        Me.TabPage1.Padding = New System.Windows.Forms.Padding(3)
+        Me.TabPage1.Size = New System.Drawing.Size(330, 292)
+        Me.TabPage1.TabIndex = 0
+        Me.TabPage1.Text = "TabPage1"
+        Me.TabPage1.UseVisualStyleBackColor = True
+        '
+        'GroupBox1
+        '
+        Me.GroupBox1.Controls.Add(Me.CButton2)
+        Me.GroupBox1.Location = New System.Drawing.Point(18, 185)
+        Me.GroupBox1.Name = "GroupBox1"
+        Me.GroupBox1.Size = New System.Drawing.Size(200, 78)
+        Me.GroupBox1.TabIndex = 4
+        Me.GroupBox1.TabStop = False
+        '
+        'CButton2
+        '
+        Me.CButton2.AutoEllipsis = False
+        Me.CButton2.AutoSizeMode = False
+        Me.CButton2.DesignerSelected = True
+        Me.CButton2.ImageIndex = 0
+        Me.CButton2.ImageKey = 0
+        Me.CButton2.Location = New System.Drawing.Point(52, 32)
+        Me.CButton2.Name = "CButton2"
+        Me.CButton2.Size = New System.Drawing.Size(90, 25)
+        Me.CButton2.TabIndex = 2
+        Me.CButton2.Text = "CButton2"
+        Me.CButton2.UseVisualStyleBackColor = False
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(356, 238)
+        Me.Button1.Location = New System.Drawing.Point(170, 130)
         Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(75, 23)
-        Me.Button1.TabIndex = 2
+        Me.Button1.Size = New System.Drawing.Size(123, 23)
+        Me.Button1.TabIndex = 3
         Me.Button1.Text = "Button1"
         Me.Button1.UseVisualStyleBackColor = True
         '
-        'Button2
+        'TextBox4
         '
-        Me.Button2.Location = New System.Drawing.Point(437, 238)
-        Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(75, 23)
-        Me.Button2.TabIndex = 3
-        Me.Button2.Text = "Button2"
-        Me.Button2.UseVisualStyleBackColor = True
+        Me.TextBox4.Location = New System.Drawing.Point(33, 88)
+        Me.TextBox4.Name = "TextBox4"
+        Me.TextBox4.Size = New System.Drawing.Size(260, 20)
+        Me.TextBox4.TabIndex = 1
         '
-        'Button3
+        'TextBox3
         '
-        Me.Button3.Location = New System.Drawing.Point(528, 238)
-        Me.Button3.Name = "Button3"
-        Me.Button3.Size = New System.Drawing.Size(75, 23)
-        Me.Button3.TabIndex = 4
-        Me.Button3.Text = "Button3"
-        Me.Button3.UseVisualStyleBackColor = True
+        Me.TextBox3.Location = New System.Drawing.Point(33, 37)
+        Me.TextBox3.Name = "TextBox3"
+        Me.TextBox3.Size = New System.Drawing.Size(260, 20)
+        Me.TextBox3.TabIndex = 0
         '
-        'TextBox1
+        'TabPage2
         '
-        Me.TextBox1.Location = New System.Drawing.Point(357, 149)
-        Me.TextBox1.Name = "TextBox1"
-        Me.TextBox1.Size = New System.Drawing.Size(293, 20)
-        Me.TextBox1.TabIndex = 0
-        '
-        'TextBox2
-        '
-        Me.TextBox2.Location = New System.Drawing.Point(357, 184)
-        Me.TextBox2.Name = "TextBox2"
-        Me.TextBox2.Size = New System.Drawing.Size(293, 20)
-        Me.TextBox2.TabIndex = 1
-        '
-        'CButton1
-        '
-        Me.CButton1.AutoEllipsis = False
-        Me.CButton1.AutoSizeMode = False
-        Me.CButton1.DesignerSelected = False
-        Me.CButton1.ImageIndex = 0
-        Me.CButton1.ImageKey = 0
-        Me.CButton1.Location = New System.Drawing.Point(624, 238)
-        Me.CButton1.Name = "CButton1"
-        Me.CButton1.Size = New System.Drawing.Size(90, 25)
-        Me.CButton1.TabIndex = 5
-        Me.CButton1.Text = "CButton1"
-        Me.CButton1.UseVisualStyleBackColor = False
-        '
-        'CButton10
-        '
-        Me.CButton10.AutoEllipsis = False
-        Me.CButton10.AutoSizeMode = False
-        Me.CButton10.BackColor = System.Drawing.Color.Transparent
-        Me.CButton10.BorderColor = System.Drawing.Color.Transparent
-        Me.CButton10.BorderShow = False
-        CBlendItems1.iColor = New System.Drawing.Color() {System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(150, Byte), Integer), CType(CType(30, Byte), Integer)), System.Drawing.Color.FromArgb(CType(CType(255, Byte), Integer), CType(CType(255, Byte), Integer), CType(CType(255, Byte), Integer))}
-        CBlendItems1.iPoint = New Single() {0!, 1.0!}
-        Me.CButton10.ColorFillBlend = CBlendItems1
-        Me.CButton10.ColorFillSolid = System.Drawing.Color.Brown
-        Me.CButton10.DesignerSelected = False
-        Me.CButton10.FillType = CButtonLib.CButton.eFillType.GradientPath
-        Me.CButton10.FillTypeLinear = System.Drawing.Drawing2D.LinearGradientMode.ForwardDiagonal
-        Me.CButton10.FocalPoints.FocusPtX = 0.6136364!
-        Me.CButton10.FocalPoints.FocusPtY = 0.5!
-        Me.CButton10.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CButton10.ForeColor = System.Drawing.Color.Green
-        Me.CButton10.ImageIndex = 0
-        Me.CButton10.ImageKey = 0
-        Me.CButton10.Location = New System.Drawing.Point(666, 149)
-        Me.CButton10.Name = "CButton10"
-        Me.CButton10.Padding = New System.Windows.Forms.Padding(25, 28, 19, 5)
-        Me.CButton10.SideImage = CType(resources.GetObject("CButton10.SideImage"), System.Drawing.Image)
-        Me.CButton10.SideImageAlign = System.Drawing.ContentAlignment.TopRight
-        Me.CButton10.SideImageSize = New System.Drawing.Size(32, 36)
-        Me.CButton10.Size = New System.Drawing.Size(160, 64)
-        Me.CButton10.TabIndex = 14
-        Me.CButton10.Text = "Add"
-        Me.CButton10.TextMargin = New System.Windows.Forms.Padding(0)
-        Me.CButton10.TextShadow = System.Drawing.Color.Silver
-        Me.CButton10.UseVisualStyleBackColor = False
+        Me.TabPage2.Location = New System.Drawing.Point(4, 22)
+        Me.TabPage2.Name = "TabPage2"
+        Me.TabPage2.Padding = New System.Windows.Forms.Padding(3)
+        Me.TabPage2.Size = New System.Drawing.Size(330, 292)
+        Me.TabPage2.TabIndex = 1
+        Me.TabPage2.Text = "TabPage2"
+        Me.TabPage2.UseVisualStyleBackColor = True
         '
         'Form2
         '
-        Me.AcceptButton = Me.CButton1
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.ButtonHighlight
         Me.ClientSize = New System.Drawing.Size(1448, 895)
-        Me.Controls.Add(Me.CButton10)
-        Me.Controls.Add(Me.CButton1)
-        Me.Controls.Add(Me.TextBox2)
-        Me.Controls.Add(Me.TextBox1)
-        Me.Controls.Add(Me.Button3)
-        Me.Controls.Add(Me.Button2)
-        Me.Controls.Add(Me.Button1)
+        Me.Controls.Add(Me.TabControl1)
         Me.Name = "Form2"
         Me.Text = "Form2"
+        Me.TabControl1.ResumeLayout(False)
+        Me.TabPage1.ResumeLayout(False)
+        Me.TabPage1.PerformLayout()
+        Me.GroupBox1.ResumeLayout(False)
         Me.ResumeLayout(False)
-        Me.PerformLayout()
 
     End Sub
-
+    Friend WithEvents TabControl1 As TabControl
+    Friend WithEvents TabPage1 As TabPage
+    Friend WithEvents TextBox4 As TextBox
+    Friend WithEvents TextBox3 As TextBox
+    Friend WithEvents CButton2 As CButtonLib.CButton
+    Friend WithEvents TabPage2 As TabPage
     Friend WithEvents Button1 As Button
-    Friend WithEvents Button2 As Button
-    Friend WithEvents Button3 As Button
-    Friend WithEvents TextBox1 As TextBox
-    Friend WithEvents TextBox2 As TextBox
-    Friend WithEvents CButton1 As CButtonLib.CButton
-    Friend WithEvents CButton10 As CButtonLib.CButton
+    Friend WithEvents GroupBox1 As GroupBox
 End Class

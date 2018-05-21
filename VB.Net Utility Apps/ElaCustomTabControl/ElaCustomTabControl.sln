@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomTabTest", "ElaCustomTabTest\ElaCustomTabTest.vbproj", "{7115413C-8C34-4F38-8C0D-DBEF07DBDD13}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomTab", "ElaCustomTab\ElaCustomTab.vbproj", "{A05BDDCC-A4CB-4238-A81C-3031E0D0F48B}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ElaCustomTabControl", "ElaCustomTabContorl\ElaCustomTabControl.vbproj", "{A05BDDCC-A4CB-4238-A81C-3031E0D0F48B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
